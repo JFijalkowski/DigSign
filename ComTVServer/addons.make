@@ -2,4 +2,4 @@ ofxAssimpModelLoader
 ofxGui
 ofxNetwork
 ofxOsc
-ofxXmlSettings
+ofxPoco
