@@ -8,3 +8,6 @@ ComTVServer/.vs/ComTVServer/v16/.suo
 *.tlog
 ComTVServer/obj/Win32/
 ComTVServer/.vs/ComTVServer/v16/ipch/
+ComTVServer/bin/ComTVServer_debug.exp
+ComTVServer/bin/ComTVServer_debug.lib
+ComTVServer/bin/ComTVServer_debug.pdb
