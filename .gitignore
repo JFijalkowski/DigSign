@@ -11,3 +11,6 @@ ComTVServer/.vs/ComTVServer/v16/ipch/
 ComTVServer/bin/ComTVServer_debug.exp
 ComTVServer/bin/ComTVServer_debug.lib
 ComTVServer/bin/ComTVServer_debug.pdb
+*.db-shm
+*.db-wal
+*.opendb
