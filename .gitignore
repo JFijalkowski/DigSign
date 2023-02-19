@@ -1,4 +1,10 @@
 *.exe
-ComTVServer/bin/
-ComTVServer/obj/
-ComTVClient/bin/
+
+ComTVClient/.vs/ComTVClient/v16/Browse.VC.db
+ComTVClient/.vs/ComTVClient/v16/Solution.VC.db
+ComTVServer/.vs/ComTVServer/v16/Browse.VC.db
+ComTVServer/.vs/ComTVServer/v16/Solution.VC.db
+ComTVServer/.vs/ComTVServer/v16/.suo
+*.tlog
+ComTVServer/obj/Win32/
+ComTVServer/.vs/ComTVServer/v16/ipch/
