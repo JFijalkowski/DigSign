@@ -1,5 +1,4 @@
 *.exe
-ComTVServer/.vs/
 ComTVServer/bin/
 ComTVServer/obj/
 ComTVClient/bin/
