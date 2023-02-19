@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
+#include "ofxNetwork.h"
 
 class ofApp : public ofBaseApp{
 
@@ -9,7 +10,7 @@ class ofApp : public ofBaseApp{
 		void update();
 		void draw();
 
-		void keyPressed(int key);
+		void keyPressed(ofKeyEventArgs& key);
 		void keyReleased(int key);
 		void mouseMoved(int x, int y );
 		void mouseDragged(int x, int y, int button);
@@ -21,4 +22,15 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 		
+		ofxTCPClient tcpClient;
+		string msgTx, msgRx;
+
+		ofTrueTypeFont  mono;
+		ofTrueTypeFont  monosm;
+
+		float counter;
+		int connectTime;
+		int deltaTime;
+
+	int size;
 };
