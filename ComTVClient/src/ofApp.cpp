@@ -35,6 +35,8 @@ void ofApp::update(){
 		if (str.length() > 0) {
 			msgRx = str;
 		}
+		//while connected, do poll to server every (?) 10 seconds
+		//
 	}
 	else {
 		msgTx = "";
