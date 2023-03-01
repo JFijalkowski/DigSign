@@ -37,19 +37,31 @@ void ofApp::update(){
 		if (connectStatus == 1) {
 			tcpClient.send("Client connected!");
 		}
-		// we are connected - lets try to receive from the server
-		string str = tcpClient.receive();
-		if (str.length() > 0) {
-			if (str == "Sending Image" && imgReceiveStatus == 0) {
-				//begin receiving image
-			}
-			//"Sending image" -> status = 1
-			//width,height,type -> status = 2
-			//image (3xwidthxheight bytes) -> status = 0 (after receiving the whole bytestream)
-
-			//convert raw bytes to image
-			//convert type string to imgtype 
+		// if client is waiting for an image to be sent, expect a bytestream
+		if (imgReceiveStatus == 2) {
+			//number of bytes in the image, assuming 3-channel colour (JPG)
+			const int imgSize = imgHeight * imgWidth * 3;
+			char* receivedBytes;
+			unsigned char buffer[7800];
+			tcpClient.receiveRawBytes(receivedBytes, (imgHeight * imgWidth * 3));
+			unsigned char* pixelData = (unsigned char *) receivedBytes;
 		}
+		else {
+			// receive string/text message from server
+			string str = tcpClient.receive();
+			if (str.length() > 0) {
+				if (str == "Sending Image" && imgReceiveStatus == 0) {
+					//begin receiving image
+				}
+				//"Sending image" -> status = 1
+				//width,height,type -> status = 2
+				//image (3xwidthxheight bytes) -> status = 0 (after receiving the whole bytestream)
+
+				//convert raw bytes to image
+				//convert type string to imgtype 
+			}
+		}
+		
 
 		//while connected, do poll to server every (?) 10 seconds
 		//

@@ -37,6 +37,8 @@ class ofApp : public ofBaseApp{
 
 		//image receiving status: 0=not receiving image, 1=expecting img metadata, 2=expecting image data
 		int imgReceiveStatus;
+		int imgWidth;
+		int imgHeight;
 
 	int size;
 };
