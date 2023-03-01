@@ -1,0 +1,29 @@
+ofImage - create/read in image from bytestream
+allows manipulation of pixel values - perfect for stego
+save image once checks carried out?
+current program loop to aim for - server open, client connects, client sends msg that it is connected,
+ listen for connection message, then send image bytestream from server to client
+can add GUI/buttons later, for now just have image transmission
+server reads out image (turns from file to bytestream) to client, which then reconstructs it
+may need to have prior message notifying an image is going to be sent, as well as its dimensions etc
+
+there seems to be a function called getPixels which makes a big old list/whatever of pixelTypes, just need to convert that to something that can be sent via TCP to the clients
+the client just needs to do the reverse, converting into list of pixels which is then read into an image objectss
+
+main issue is figuring out a GUI/server control thing
+
+could eventually end up automated, but for now manual control will be required
+does mean ofx panels going all over the place doesn't matter since it's dev-only
+just need some stuff to notify you clients have connected, and to idk send an image (image list on dropdown, button to send selected image)
+
+maybe even just have simplified thing of select client number from dropdown, select action, do action
+
+automated control:
+- keep track of what is on the google drive
+- if new image, send image to each client, update image display order
+- if image removed, send "remove image" command to clients, update image display order
+- how to customise order/display duration etc? may still need an interface, but the other stuff can still occur automatically - create events so both automated control and manual control can use the same functionality
+
+
+each message will either need to be encrypted (might be tricky to implement), or to have some authorisation token, so no unauthorised people can interfere with the displays (since they're just listening for messages from a port)
+given that the image-sending thing is just a bytestream, it could have a code appended to the front (of a known length), or may not need to be secured since steganography will be applied in the image anyway.

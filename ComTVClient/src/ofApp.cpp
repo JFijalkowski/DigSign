@@ -25,16 +25,32 @@ void ofApp::setup(){
 
 	connectTime = 0;
 	deltaTime = 0;
+
+	connectStatus = 0;
+	imgReceiveStatus = 0;
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
 	if (tcpClient.isConnected()) {
+		//client has just connected to server
+		if (connectStatus == 1) {
+			tcpClient.send("Client connected!");
+		}
 		// we are connected - lets try to receive from the server
 		string str = tcpClient.receive();
 		if (str.length() > 0) {
-			msgRx = str;
+			if (str == "Sending Image" && imgReceiveStatus == 0) {
+				//begin receiving image
+			}
+			//"Sending image" -> status = 1
+			//width,height,type -> status = 2
+			//image (3xwidthxheight bytes) -> status = 0 (after receiving the whole bytestream)
+
+			//convert raw bytes to image
+			//convert type string to imgtype 
 		}
+
 		//while connected, do poll to server every (?) 10 seconds
 		//
 	}
@@ -47,6 +63,7 @@ void ofApp::update(){
 			tcpClient.setup("127.0.0.1", 11999);
 			tcpClient.setMessageDelimiter("\n");
 			connectTime = ofGetElapsedTimeMillis();
+			connectStatus = 1;
 		}
 
 	}

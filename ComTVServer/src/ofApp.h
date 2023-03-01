@@ -2,6 +2,9 @@
 
 #include "ofMain.h"
 #include "ofxNetwork.h"
+#include "ofxGui.h"
+#include "ofImage.h"
+#include "ofPixels.h"
 
 class ofApp : public ofBaseApp{
 
@@ -27,6 +30,10 @@ class ofApp : public ofBaseApp{
 		ofTrueTypeFont  mono;
 		ofTrueTypeFont  monosm;
 
+		ofxPanel gui;
+		ofxButton clientPing;
+
 		vector <string> storeText;
 		uint64_t lastSent;
+		ofImage img;
 };

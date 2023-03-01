@@ -32,5 +32,11 @@ class ofApp : public ofBaseApp{
 		int connectTime;
 		int deltaTime;
 
+		//connection status: 0=not connected, 1=attempting connection, 2=connected
+		int connectStatus;
+
+		//image receiving status: 0=not receiving image, 1=expecting img metadata, 2=expecting image data
+		int imgReceiveStatus;
+
 	int size;
 };
