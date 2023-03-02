@@ -39,6 +39,7 @@ class ofApp : public ofBaseApp{
 		int imgReceiveStatus;
 		int imgWidth;
 		int imgHeight;
+		ofImage receivedImg;
 
 	int size;
 };

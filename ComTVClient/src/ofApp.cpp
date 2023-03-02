@@ -41,10 +41,11 @@ void ofApp::update(){
 		if (imgReceiveStatus == 2) {
 			//number of bytes in the image, assuming 3-channel colour (JPG)
 			const int imgSize = imgHeight * imgWidth * 3;
-			char* receivedBytes;
+			char* receivedBytes{};
 			unsigned char buffer[7800];
 			tcpClient.receiveRawBytes(receivedBytes, (imgHeight * imgWidth * 3));
 			unsigned char* pixelData = (unsigned char *) receivedBytes;
+			receivedImg.setFromPixels(pixelData, imgWidth, imgHeight, OF_IMAGE_COLOR);
 		}
 		else {
 			// receive string/text message from server
