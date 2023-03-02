@@ -40,12 +40,21 @@ void ofApp::update(){
 		// if client is waiting for an image to be sent, expect a bytestream
 		if (imgReceiveStatus == 2) {
 			//number of bytes in the image, assuming 3-channel colour (JPG)
-			const int imgSize = imgHeight * imgWidth * 3;
+			// 
+			//width x height x 3 when image type is JPG
+			int imgSize = imgHeight * imgWidth * 3;
+			if (receivedImageType == OF_IMAGE_COLOR_ALPHA) {
+				//if png has been sent, 4 bytes per pixel
+				imgSize = imgHeight * imgWidth * 4;
+			}
+			
 			char* receivedBytes{};
 			unsigned char buffer[7800];
 			tcpClient.receiveRawBytes(receivedBytes, (imgHeight * imgWidth * 3));
 			unsigned char* pixelData = (unsigned char *) receivedBytes;
-			receivedImg.setFromPixels(pixelData, imgWidth, imgHeight, OF_IMAGE_COLOR);
+			receivedImg.setFromPixels(pixelData, imgWidth, imgHeight, receivedImageType);
+			receivedImg.save(receivedImgName);
+			imgReceiveStatus = 0;
 		}
 		else {
 			// receive string/text message from server
@@ -53,13 +62,28 @@ void ofApp::update(){
 			if (str.length() > 0) {
 				if (str == "Sending Image" && imgReceiveStatus == 0) {
 					//begin receiving image
+					imgReceiveStatus = 1;
 				}
-				//"Sending image" -> status = 1
-				//width,height,type -> status = 2
-				//image (3xwidthxheight bytes) -> status = 0 (after receiving the whole bytestream)
+				else if (imgReceiveStatus == 1) {
+					//expecting metadata string = width, height, filename
+					
+					//split on commas to get list/vector of values
+					vector <string> metadata = ofSplitString(str, "\"");
 
-				//convert raw bytes to image
-				//convert type string to imgtype 
+					//if message has split into 3 values, (assume) message is the metadata
+					if (metadata.size() == 3) {
+						int imgwidth = ofToInt(metadata[0]);
+						int imgheight = ofToInt(metadata[1]);
+						receivedImgName = metadata[2];
+						string filetype = receivedImgName.substr(receivedImgName.size() - 3);
+						receivedImageType = OF_IMAGE_COLOR;
+						if (filetype == "png") {
+							receivedImageType = OF_IMAGE_COLOR_ALPHA;
+						}
+						//image metadata has been received, wait for image bytestream
+						imgReceiveStatus = 2;
+					}
+				}
 			}
 		}
 		

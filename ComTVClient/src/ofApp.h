@@ -40,6 +40,8 @@ class ofApp : public ofBaseApp{
 		int imgWidth;
 		int imgHeight;
 		ofImage receivedImg;
+		ofImageType receivedImageType;
+		string receivedImgName;
 
 	int size;
 };

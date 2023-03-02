@@ -49,16 +49,18 @@ void ofApp::update() {
 			} while (tmp != "");
 			if (str == "Client Connected!") {
 				//client has just connected
+				//client has just connected
 				//load image to send
 				string imagename = "testimg.jpg";
+				
 				img.load(imagename);
 				//convert image to bytestream
 				int width = img.getWidth();
 				int height = img.getHeight();
 
-				string type = ofToString(img.getImageType());
 				TCP.send(i, "Sending Image");
-				TCP.send(i, (ofToString(width) + "," + ofToString(height) + "," + type));
+				//format: width,height,filename
+				TCP.send(i, (ofToString(width) + "," + ofToString(height) + "," + imagename));
 				//img.getPixels().getPixels();
 				TCP.sendRawBytes(i, (const char*)img.getPixels().getData(), (width * height * 3));
 			}
