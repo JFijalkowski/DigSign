@@ -34,10 +34,11 @@ void ofApp::setup(){
 void ofApp::update(){
 	if (tcpClient.isConnected()) {
 		//client has just connected to server
-		if (connectStatus == 1) {
+		if (connectStatus == 0) {
 			tcpClient.send("Client connected!");
+			connectStatus = 1;
 		}
-		// if client is waiting for an image to be sent, expect a bytestream
+		// client waiting for bytestream
 		if (imgReceiveStatus == 2) {
 			//number of bytes in the image, assuming 3-channel colour (JPG)
 			// 
@@ -49,17 +50,28 @@ void ofApp::update(){
 			}
 			
 			char* receivedBytes{};
-			unsigned char buffer[7800];
-			tcpClient.receiveRawBytes(receivedBytes, (imgHeight * imgWidth * 3));
-			unsigned char* pixelData = (unsigned char *) receivedBytes;
-			receivedImg.setFromPixels(pixelData, imgWidth, imgHeight, receivedImageType);
-			receivedImg.save(receivedImgName);
-			imgReceiveStatus = 0;
+			ofBuffer buffer;
+			buffer.allocate(imgSize);
+			int totalBytes = 0;
+			while (totalBytes < imgSize) {
+				int result = tcpClient.receiveRawBytes(&buffer.getBinaryBuffer()[totalBytes], imgSize - totalBytes);
+				if (result > 0) {
+					totalBytes += result;
+					if (totalBytes == imgSize) {
+						receivedImg.setFromPixels((unsigned char*)buffer.getData() , imgWidth, imgHeight, receivedImageType);
+						receivedImg.save(receivedImgName);
+						imgReceiveStatus = 0;
+					}
+				}
+			}
 		}
+		//otherwise client will be receiving string values
 		else {
 			// receive string/text message from server
 			string str = tcpClient.receive();
+			
 			if (str.length() > 0) {
+				msgStore.push_back(str);
 				if (str == "Sending Image" && imgReceiveStatus == 0) {
 					//begin receiving image
 					imgReceiveStatus = 1;
@@ -68,12 +80,12 @@ void ofApp::update(){
 					//expecting metadata string = width, height, filename
 					
 					//split on commas to get list/vector of values
-					vector <string> metadata = ofSplitString(str, "\"");
+					vector <string> metadata = ofSplitString(str, ",");
 
 					//if message has split into 3 values, (assume) message is the metadata
 					if (metadata.size() == 3) {
-						int imgwidth = ofToInt(metadata[0]);
-						int imgheight = ofToInt(metadata[1]);
+						imgWidth = ofToInt(metadata[0]);
+						imgHeight = ofToInt(metadata[1]);
 						receivedImgName = metadata[2];
 						string filetype = receivedImgName.substr(receivedImgName.size() - 3);
 						receivedImageType = OF_IMAGE_COLOR;
@@ -92,15 +104,14 @@ void ofApp::update(){
 		//
 	}
 	else {
+		connectStatus = 0;
 		msgTx = "";
 		// if we are not connected lets try and reconnect every 5 seconds
 		deltaTime = ofGetElapsedTimeMillis() - connectTime;
-
 		if (deltaTime > 5000) {
 			tcpClient.setup("127.0.0.1", 11999);
 			tcpClient.setMessageDelimiter("\n");
 			connectTime = ofGetElapsedTimeMillis();
-			connectStatus = 1;
 		}
 
 	}
@@ -124,6 +135,10 @@ void ofApp::draw(){
 	}
 	else {
 		ofDrawBitmapString("status: server not found. launch server app and check ports!\n\nreconnecting in " + ofToString((5000 - deltaTime) / 1000) + " seconds", 15, 55);
+	}
+	//draw received messages from server
+	for (unsigned int i = 0; i < msgStore.size(); i++) {
+		ofDrawBitmapString(msgStore[i], 300, 300 + (15 * i));
 	}
 }
 

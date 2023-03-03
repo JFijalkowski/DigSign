@@ -37,7 +37,7 @@ void ofApp::update() {
 		for (int i = 0; i < TCP.getLastID(); i++) {
 			if (!TCP.isClientConnected(i)) continue;
 
-			TCP.send(i, "hello client - you are connected on port - " + ofToString(TCP.getClientPort(i)));
+			//TCP.send(i, "hello client - you are connected on port - " + ofToString(TCP.getClientPort(i)));
 
 			// receive all the available messages, separated by \n
 			// and keep only the last one
@@ -47,8 +47,7 @@ void ofApp::update() {
 				str = tmp;
 				tmp = TCP.receive(i);
 			} while (tmp != "");
-			if (str == "Client Connected!") {
-				//client has just connected
+			if (str == "Client connected!") {
 				//client has just connected
 				//load image to send
 				string imagename = "testimg.jpg";
@@ -125,7 +124,7 @@ void ofApp::draw(){
 		}
 		ofDrawBitmapString(storeText[i], 25, yPos + 20);
 	}
-	gui.draw();
+	//gui.draw();
 }
 
 //--------------------------------------------------------------

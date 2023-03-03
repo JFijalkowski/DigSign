@@ -32,7 +32,7 @@ class ofApp : public ofBaseApp{
 		int connectTime;
 		int deltaTime;
 
-		//connection status: 0=not connected, 1=attempting connection, 2=connected
+		//connection status: 0=not connected, 1=has connected
 		int connectStatus;
 
 		//image receiving status: 0=not receiving image, 1=expecting img metadata, 2=expecting image data
@@ -42,6 +42,7 @@ class ofApp : public ofBaseApp{
 		ofImage receivedImg;
 		ofImageType receivedImageType;
 		string receivedImgName;
+		vector <string> msgStore;
 
 	int size;
 };
