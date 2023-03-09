@@ -127,6 +127,27 @@ void ofApp::draw(){
 	//gui.draw();
 }
 
+//method to draw a controls box for a connected client at a given coordinate
+// currently just need a "send image" button
+// draw preview of displayed image?
+// small green square/corner to identify it's running (may be already implied that it's running since unconnected clients will not be drawn)
+// maybe have a popup gui that's created when needed - allows you to input image display orders (probably)
+//add coordinates for buttons to data structure for buttons (and which client they belong to)
+//datastructure to store button info should be:
+//split by button function
+//key matches client id, so same value can be used to determine which client to send messages to
+// 
+//need constants for statuses, similar to clients
+//track instruction status for each client (maybe can be used during drawing to show current progress
+//to do that, make a map/dictionary of status code to description, so you can show a readable english description of what a client is doing
+// awaiting instruction/idle/working ok
+// instruction done
+// beginning img send, sending image metadata, sending image
+// sending new img display list
+// removing img
+// etc
+//
+
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
 
@@ -152,11 +173,6 @@ void ofApp::mousePressed(int x, int y, int button){
 	//add UI elements for different features
 	
 	//send update ping (loop through all images the client doesn't have)
-		//first message contains what the image is called, its size etc (metadata)
-		//second message is the image
-		//stego would need to be applied before sending,
-		//then client can either decode directly from the stream being sent or check the image after receiving it
-		//client can send back msg when it's successfully read the image
 	
 	//change image order 
 		//send new list (of image names) to client
