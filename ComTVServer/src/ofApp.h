@@ -39,4 +39,12 @@ class ofApp : public ofBaseApp{
 
 		map <int, int> clientStatuses;
 		map <int, tuple<int, int, int, int>> refreshButtons;
+
+
+		const int IDLE = 0;
+		const int START_IMAGE_SEND = 1;
+		const int SEND_IMG_METADATA = 2;
+		const int SEND_IMG_DATA = 3;
+		const int SEND_DISPLAY_SCHEDULE = 4;
+		const int REMOVE_IMAGE = 5;
 };

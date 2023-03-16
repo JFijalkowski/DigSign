@@ -184,14 +184,16 @@ void ofApp::mousePressed(int x, int y, int button){
 	for (unsigned int i = 0; i < (unsigned int)TCP.getLastID(); i++) {
 		if (!TCP.isClientConnected(i))continue;
 
-		//check if refresh button has been pressed
+		//check if a refresh button has been pressed
 		if (checkCollides(x, y, refreshButtons[i])) {
+			clientStatuses[i] = 0;
 			//call func for refreshing client i
+			//for now, send image
+
 			break;
 		}
-	}
-
-	//change image order 
+		//check if <> button has been pressed ...
+		//change image order 
 		//send new list (of image names) to client
 		//may need its own UI element for this, either dragging&dropping, typing in some text box or selecting order from dropdowns
 
@@ -199,10 +201,9 @@ void ofApp::mousePressed(int x, int y, int button){
 
 	//remove image
 		//specify image to be deleted, and pass in a new image order (just with the removed image taken out)
-
-
-
+	}
 }
+
 
 bool checkCollides(int x, int y, tuple<int, int, int, int> buttonCoords) {
 	int x1 = get<0>(buttonCoords);
