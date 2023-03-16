@@ -128,11 +128,19 @@ void ofApp::draw(){
 }
 
 //method to draw a controls box for a connected client at a given coordinate
-// currently just need a "send image" button
-// draw preview of displayed image?
-// small green square/corner to identify it's running (may be already implied that it's running since unconnected clients will not be drawn)
-// maybe have a popup gui that's created when needed - allows you to input image display orders (probably)
-//add coordinates for buttons to data structure for buttons (and which client they belong to)
+void drawControlPanel(int x, int y, int clientID) {
+	// currently just need a "send image" button
+	
+	//check if action is being carried out currently - if it is, draw the button as "pressed" or greyed out
+	
+
+	// draw preview of displayed image?
+	// small green square/corner to identify it's running (may be already implied that it's running since unconnected clients will not be drawn)
+	// maybe have a popup gui that's created when needed - allows you to input image display orders (probably)
+	//add coordinates for buttons to data structure for buttons (and which client they belong to)
+}
+
+
 //datastructure to store button info should be:
 //split by button function
 //key matches client id, so same value can be used to determine which client to send messages to
@@ -172,8 +180,17 @@ void ofApp::mouseDragged(int x, int y, int button){
 void ofApp::mousePressed(int x, int y, int button){
 	//add UI elements for different features
 	
-	//send update ping (loop through all images the client doesn't have)
-	
+	//loops through each client, ignores if client is no longer connected
+	for (unsigned int i = 0; i < (unsigned int)TCP.getLastID(); i++) {
+		if (!TCP.isClientConnected(i))continue;
+
+		//check if refresh button has been pressed
+		if (checkCollides(x, y, refreshButtons[i])) {
+			//call func for refreshing client i
+			break;
+		}
+	}
+
 	//change image order 
 		//send new list (of image names) to client
 		//may need its own UI element for this, either dragging&dropping, typing in some text box or selecting order from dropdowns
@@ -184,6 +201,22 @@ void ofApp::mousePressed(int x, int y, int button){
 		//specify image to be deleted, and pass in a new image order (just with the removed image taken out)
 
 
+
+}
+
+bool checkCollides(int x, int y, tuple<int, int, int, int> buttonCoords) {
+	int x1 = get<0>(buttonCoords);
+	int y1 = get<1>(buttonCoords);
+	int x2 = get<2>(buttonCoords);
+	int y2 = get<3>(buttonCoords);
+
+	//check if coordinates lie within specified box
+	if (x > x1 && x < x2 && y > y1 && y < y2) {
+		return true;
+	}
+	else {
+		return false;
+	}
 
 }
 

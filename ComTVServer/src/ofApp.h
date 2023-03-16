@@ -36,4 +36,7 @@ class ofApp : public ofBaseApp{
 		vector <string> storeText;
 		uint64_t lastSent;
 		ofImage img;
+
+		map <int, int> clientStatuses;
+		map <int, tuple<int, int, int, int>> refreshButtons;
 };
