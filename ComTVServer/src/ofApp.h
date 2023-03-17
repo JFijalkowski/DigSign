@@ -42,7 +42,7 @@ class ofApp : public ofBaseApp{
 
 
 		const int IDLE = 0;
-		const int START_IMAGE_SEND = 1;
+		const int START_IMG_SEND = 1;
 		const int SEND_IMG_METADATA = 2;
 		const int SEND_IMG_DATA = 3;
 		const int SEND_DISPLAY_SCHEDULE = 4;

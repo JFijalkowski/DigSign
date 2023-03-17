@@ -47,21 +47,10 @@ void ofApp::update() {
 				str = tmp;
 				tmp = TCP.receive(i);
 			} while (tmp != "");
+
 			if (str == "Client connected!") {
 				//client has just connected
-				//load image to send
-				string imagename = "testimg.jpg";
-				
-				img.load(imagename);
-				//convert image to bytestream
-				int width = img.getWidth();
-				int height = img.getHeight();
-
-				TCP.send(i, "Sending Image");
-				//format: width,height,filename
-				TCP.send(i, (ofToString(width) + "," + ofToString(height) + "," + imagename));
-				//img.getPixels().getPixels();
-				TCP.sendRawBytes(i, (const char*)img.getPixels().getData(), (width * height * 3));
+				clientStatuses.insert({ i, IDLE });
 			}
 			lastSent = now;
 		}
@@ -186,10 +175,25 @@ void ofApp::mousePressed(int x, int y, int button){
 
 		//check if a refresh button has been pressed
 		if (checkCollides(x, y, refreshButtons[i])) {
-			clientStatuses[i] = 0;
+			clientStatuses[i] = START_IMG_SEND;
 			//call func for refreshing client i
+			
 			//for now, send image
-
+			//---------------------send image---------------------------------
+			string imgName = "testimg.jpg";
+			//load image to send
+			img.load(imgName);
+			//convert image to bytestream
+			int width = img.getWidth();
+			int height = img.getHeight();
+			TCP.send(i, "Sending Image");
+			clientStatuses[i] = SEND_IMG_METADATA;
+			//format: width,height,filename
+			TCP.send(i, (ofToString(width) + "," + ofToString(height) + "," + imgName));
+			clientStatuses[i] = SEND_IMG_DATA;
+			//img.getPixels().getPixels();
+			TCP.sendRawBytes(i, (const char*)img.getPixels().getData(), (width * height * 3));
+			
 			break;
 		}
 		//check if <> button has been pressed ...
@@ -203,6 +207,8 @@ void ofApp::mousePressed(int x, int y, int button){
 		//specify image to be deleted, and pass in a new image order (just with the removed image taken out)
 	}
 }
+
+
 
 
 bool checkCollides(int x, int y, tuple<int, int, int, int> buttonCoords) {
