@@ -24,6 +24,7 @@ class ofApp : public ofBaseApp{
 		void windowResized(int w, int h);
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
+		void sendInstruction();
 		
 		ofxTCPServer TCP;
 
@@ -40,11 +41,5 @@ class ofApp : public ofBaseApp{
 		map <int, int> clientStatuses;
 		map <int, tuple<int, int, int, int>> refreshButtons;
 
-
-		const int IDLE = 0;
-		const int START_IMG_SEND = 1;
-		const int SEND_IMG_METADATA = 2;
-		const int SEND_IMG_DATA = 3;
-		const int SEND_DISPLAY_SCHEDULE = 4;
-		const int REMOVE_IMAGE = 5;
+		
 };

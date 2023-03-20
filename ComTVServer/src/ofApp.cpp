@@ -4,6 +4,28 @@
 #include "ofPixels.h"
 
 using namespace std;
+//constants
+
+//client status codes
+const int IDLE = 0;
+const int START_IMG_SEND = 1;
+const int SEND_IMG_METADATA = 2;
+const int SEND_IMG_DATA = 3;
+const int SEND_DISPLAY_SCHEDULE = 4;
+const int REMOVE_IMAGE = 5;
+
+//add some constants for messages (eg: "Client Connected" so no mismatch occurs)
+//removes need to directly type message strings, and prevents capitalisation/typo errors
+
+
+//user display dimension constants
+const int screenWidth = 1000;
+const int screenHeight = 800;
+const int clientPanelSize = 200;
+const int previewImageSize = 125;
+const int refreshButtonWidth = 200;
+const int refreshButtonHeight = 50;
+
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -49,10 +71,40 @@ void ofApp::update() {
 			} while (tmp != "");
 
 			if (str == "Client connected!") {
-				//client has just connected
-				clientStatuses.insert({ i, IDLE });
+				//client has just connected, start tracking their status
+				clientStatuses[i] = IDLE;
 			}
 			lastSent = now;
+
+			//carry out client action
+			int clientStatus = clientStatuses[i];
+			//---------------------send image--------------------------
+
+			//notify client image is going to be sent
+			if (clientStatus == START_IMG_SEND) {
+				TCP.send(i, "Sending Image");
+				clientStatuses[i] = SEND_IMG_METADATA;
+			}
+			//load image and send metadata
+			else if (clientStatus == SEND_IMG_METADATA) {
+				string imgName = "testimg.jpg";
+				//load image to send
+				img.load(imgName);
+				//convert image to bytestream
+				int width = img.getWidth();
+				int height = img.getHeight();
+				//format: width,height,filename
+				TCP.send(i, (ofToString(width) + "," + ofToString(height) + "," + imgName));
+				clientStatuses[i] = SEND_IMG_DATA;
+				//image data is sent immediately so the client doesn't accidentally read any other information as the data bytestream
+				TCP.sendRawBytes(i, (const char*)img.getPixels().getData(), (width * height * 3));
+			}
+			//client sends confirmation message when image has been recieved
+			else if (clientStatus == SEND_IMG_DATA && str == "Image Received") {
+				//client is able to receive new instructions
+				clientStatuses[i] = IDLE;
+			}
+			
 		}
 
 	}
@@ -67,6 +119,9 @@ void ofApp::draw(){
 	ofDrawRectangle(10, 60, ofGetWidth() - 24, ofGetHeight() - 65 - 15);
 
 	ofSetColor(220);
+	int boxcoords[3] = { 100,100,100 };
+
+	drawControlPanel(300, 300, 0, boxcoords);
 
 	// for each connected client lets get the data being sent and lets print it to the screen
 	for (unsigned int i = 0; i < (unsigned int)TCP.getLastID(); i++) {
@@ -74,6 +129,10 @@ void ofApp::draw(){
 		if (!TCP.isClientConnected(i))continue;
 
 		// give each client its own color
+		int r = 255 - i * 30;
+		int g = 255 - i * 20;
+		int b = 100 + i * 40;
+
 		ofSetColor(255 - i * 30, 255 - i * 20, 100 + i * 40);
 
 		// calculate where to draw the text
@@ -108,22 +167,25 @@ void ofApp::draw(){
 
 		// draw the info text and the received text bellow it
 		ofDrawBitmapString(info, xPos, yPos);
-		if (str == "Client Connected") {
-			ofDrawBitmapString("Client connected", 100, 100);
-		}
 		ofDrawBitmapString(storeText[i], 25, yPos + 20);
 	}
 	//gui.draw();
 }
 
 //method to draw a controls box for a connected client at a given coordinate
-void drawControlPanel(int x, int y, int clientID) {
-	// currently just need a "send image" button
-	
-	//check if action is being carried out currently - if it is, draw the button as "pressed" or greyed out
-	
+void drawControlPanel(int x, int y, int clientID, int backgroundColour[3]) {
+	// draw client bounding box
+	ofSetColor(backgroundColour[0],backgroundColour[1],backgroundColour[2]);
+	ofDrawRectangle(x, y, clientPanelSize, clientPanelSize);
 
-	// draw preview of displayed image?
+	ofSetColor(50,150,50);
+	ofDrawRectangle(
+		(x), 
+		(y + clientPanelSize - refreshButtonHeight),
+		refreshButtonWidth, refreshButtonHeight);
+	ofSetColor(0);
+	ofDrawBitmapString("Refresh", (x + clientPanelSize/0.1), (y + clientPanelSize - refreshButtonHeight/0.7));
+	// draw preview of displayed image
 	// small green square/corner to identify it's running (may be already implied that it's running since unconnected clients will not be drawn)
 	// maybe have a popup gui that's created when needed - allows you to input image display orders (probably)
 	//add coordinates for buttons to data structure for buttons (and which client they belong to)
@@ -165,6 +227,10 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 }
 
+void ofApp::sendInstruction() {
+	TCP.send(1, "message");
+}
+
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
 	//add UI elements for different features
@@ -172,31 +238,22 @@ void ofApp::mousePressed(int x, int y, int button){
 	//loops through each client, ignores if client is no longer connected
 	for (unsigned int i = 0; i < (unsigned int)TCP.getLastID(); i++) {
 		if (!TCP.isClientConnected(i))continue;
+		//will only accept new instructions if the client is currently idle
+		if (clientStatuses[i] == IDLE)continue;
 
+		//----------------------------send image-------------------
 		//check if a refresh button has been pressed
 		if (checkCollides(x, y, refreshButtons[i])) {
 			clientStatuses[i] = START_IMG_SEND;
 			//call func for refreshing client i
 			
 			//for now, send image
-			//---------------------send image---------------------------------
-			string imgName = "testimg.jpg";
-			//load image to send
-			img.load(imgName);
-			//convert image to bytestream
-			int width = img.getWidth();
-			int height = img.getHeight();
-			TCP.send(i, "Sending Image");
-			clientStatuses[i] = SEND_IMG_METADATA;
-			//format: width,height,filename
-			TCP.send(i, (ofToString(width) + "," + ofToString(height) + "," + imgName));
-			clientStatuses[i] = SEND_IMG_DATA;
-			//img.getPixels().getPixels();
-			TCP.sendRawBytes(i, (const char*)img.getPixels().getData(), (width * height * 3));
-			
+
+			//break, as only one button can be pressed at a given time
 			break;
 		}
-		//check if <> button has been pressed ...
+		//check if <button type> button has been pressed ...
+		// 
 		//change image order 
 		//send new list (of image names) to client
 		//may need its own UI element for this, either dragging&dropping, typing in some text box or selecting order from dropdowns

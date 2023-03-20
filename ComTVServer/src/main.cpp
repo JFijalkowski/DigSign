@@ -3,7 +3,7 @@
 
 //========================================================================
 int main( ){
-	ofSetupOpenGL(1024,768,OF_WINDOW);			// <-------- setup the GL context
+	ofSetupOpenGL(1000,800,OF_WINDOW);			// <-------- setup the GL context
 	// current goals:
 	// client and server files
 	// communicate over same wifi network
