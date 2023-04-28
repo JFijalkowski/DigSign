@@ -26,6 +26,8 @@ const int previewImageSize = 125;
 const int refreshButtonWidth = 200;
 const int refreshButtonHeight = 50;
 
+int refreshButtonColour[] = { 50, 150, 50 };
+
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -59,8 +61,7 @@ void ofApp::update() {
 		for (int i = 0; i < TCP.getLastID(); i++) {
 			if (!TCP.isClientConnected(i)) continue;
 
-			//TCP.send(i, "hello client - you are connected on port - " + ofToString(TCP.getClientPort(i)));
-
+			
 			// receive all the available messages, separated by \n
 			// and keep only the last one
 			string str;
@@ -78,6 +79,8 @@ void ofApp::update() {
 
 			//carry out client action
 			int clientStatus = clientStatuses[i];
+
+
 			//---------------------send image--------------------------
 
 			//notify client image is going to be sent
@@ -116,12 +119,15 @@ void ofApp::draw(){
 	ofDrawBitmapString("COM TV SERVER \nConnect on port: " + ofToString(TCP.getPort()), 10, 20);
 	ofDrawBitmapString("Connected Clients : " + ofToString(TCP.getNumClients()), 10, 50);
 	ofSetColor(0);
-	ofDrawRectangle(10, 60, ofGetWidth() - 24, ofGetHeight() - 65 - 15);
+	//ofDrawRectangle(10, 60, ofGetWidth() - 24, ofGetHeight() - 65 - 15);
 
 	ofSetColor(220);
-	int boxcoords[3] = { 100,100,100 };
+	int boxcolour[3] = { 100,100,100 };
 
-	drawControlPanel(300, 300, 0, boxcoords);
+	drawControlPanel(300, 300, 0, boxcolour);
+	
+	//clear button collection
+	refreshButtons = {};
 
 	// for each connected client lets get the data being sent and lets print it to the screen
 	for (unsigned int i = 0; i < (unsigned int)TCP.getLastID(); i++) {
@@ -173,25 +179,39 @@ void ofApp::draw(){
 }
 
 //method to draw a controls box for a connected client at a given coordinate
-void drawControlPanel(int x, int y, int clientID, int backgroundColour[3]) {
+void ofApp::drawControlPanel(float x, float y, int clientID, int backgroundColour[3]) {
 	// draw client bounding box
 	ofSetColor(backgroundColour[0],backgroundColour[1],backgroundColour[2]);
 	ofDrawRectangle(x, y, clientPanelSize, clientPanelSize);
 
-	ofSetColor(50,150,50);
-	ofDrawRectangle(
-		(x), 
-		(y + clientPanelSize - refreshButtonHeight),
-		refreshButtonWidth, refreshButtonHeight);
-	ofSetColor(0);
-	ofDrawBitmapString("Refresh", (x + clientPanelSize/0.1), (y + clientPanelSize - refreshButtonHeight/0.7));
+	//draw refresh button at bottom of panel
+	//add drawn button coords to collection of refresh buttons
+	refreshButtons.insert({ 
+		clientID, drawButton(x, (y + clientPanelSize - refreshButtonHeight), refreshButtonWidth, refreshButtonHeight, refreshButtonColour, "Refresh") 
+		});
+	
 	// draw preview of displayed image
 	// small green square/corner to identify it's running (may be already implied that it's running since unconnected clients will not be drawn)
-	// maybe have a popup gui that's created when needed - allows you to input image display orders (probably)
+	// maybe have a popup gui that's created when neede	d - allows you to input image display orders (probably)
 	//add coordinates for buttons to data structure for buttons (and which client they belong to)
 }
 
+//draw a button at coordinates x,y of specified width, height and colour
+//draws provided text on left of button (with some padding)
+//could add an offset parameter to jank in some text alignment
+tuple<float, float, float, float> ofApp::drawButton(float x, float y, float width, float height, int backgroundColour[3], string label) {
+	
+	ofSetColor(backgroundColour[0], backgroundColour[1], backgroundColour[2]);
+	ofDrawRectangle(x, y, width, height);
+	
+	//draw refresh button text
+	ofSetColor(255);
+	ofDrawBitmapString("Refresh", (x + (width * 0.1)), (y + (height * 0.66)));
 
+	tuple <float, float, float, float> buttonCoords = { x,y, x + width, y + width };
+	return buttonCoords;
+
+}
 //datastructure to store button info should be:
 //split by button function
 //key matches client id, so same value can be used to determine which client to send messages to
@@ -238,6 +258,7 @@ void ofApp::mousePressed(int x, int y, int button){
 	//loops through each client, ignores if client is no longer connected
 	for (unsigned int i = 0; i < (unsigned int)TCP.getLastID(); i++) {
 		if (!TCP.isClientConnected(i))continue;
+
 		//will only accept new instructions if the client is currently idle
 		if (clientStatuses[i] == IDLE)continue;
 
@@ -268,7 +289,7 @@ void ofApp::mousePressed(int x, int y, int button){
 
 
 
-bool checkCollides(int x, int y, tuple<int, int, int, int> buttonCoords) {
+bool ofApp::checkCollides(int x, int y, tuple<int, int, int, int> buttonCoords) {
 	int x1 = get<0>(buttonCoords);
 	int y1 = get<1>(buttonCoords);
 	int x2 = get<2>(buttonCoords);
