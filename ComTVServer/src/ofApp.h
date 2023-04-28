@@ -27,7 +27,7 @@ class ofApp : public ofBaseApp{
 		void sendInstruction();
 
 		void drawControlPanel(float x, float y, int clientID, int backgroundColour[3]);
-		tuple<float, float, float, float> drawButton(float x, float y, float width, float height, int backgroundColour[3], string text);
+		tuple<int, int, int, int> drawButton(float x, float y, float width, float height, int backgroundColour[3], string text);
 		bool checkCollides(int x, int y, tuple<int, int, int, int> buttonCoords);
 
 		ofxTCPServer TCP;
@@ -44,7 +44,7 @@ class ofApp : public ofBaseApp{
 
 		map <int, int> clientStatuses;
 		map <int, string> displayedImages;
-		map <int, tuple<float, float, float, float>> refreshButtons;
+		map <int, tuple<int, int, int, int>> refreshButtons;
 
 		
 };

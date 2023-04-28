@@ -14,6 +14,12 @@ const int SEND_IMG_DATA = 3;
 const int SEND_DISPLAY_SCHEDULE = 4;
 const int REMOVE_IMAGE = 5;
 
+const string statusNames[] = { "Idle",
+	"Starting Image Send...",
+	"Sending Image Metadata...",
+	"Sending Image Data...",
+	"Sending Display Schedule",
+	"Removing Image" };
 //add some constants for messages (eg: "Client Connected" so no mismatch occurs)
 //removes need to directly type message strings, and prevents capitalisation/typo errors
 
@@ -27,7 +33,7 @@ const int refreshButtonWidth = 200;
 const int refreshButtonHeight = 50;
 
 int refreshButtonColour[] = { 50, 150, 50 };
-
+const float panelCoords[4][2] = { {25,100}, {275, 100}, {525, 100}, {775, 100} };
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -124,22 +130,25 @@ void ofApp::draw(){
 	ofSetColor(220);
 	int boxcolour[3] = { 100,100,100 };
 
-	drawControlPanel(300, 300, 0, boxcolour);
 	
 	//clear button collection
 	refreshButtons = {};
 
+	int connectedClientNum = 0;
+
 	// for each connected client lets get the data being sent and lets print it to the screen
 	for (unsigned int i = 0; i < (unsigned int)TCP.getLastID(); i++) {
-
 		if (!TCP.isClientConnected(i))continue;
 
+		
 		// give each client its own color
 		int r = 255 - i * 30;
 		int g = 255 - i * 20;
 		int b = 100 + i * 40;
 
 		ofSetColor(255 - i * 30, 255 - i * 20, 100 + i * 40);
+		int panelColour[] = { r,g,b };
+		drawControlPanel(panelCoords[connectedClientNum][0], panelCoords[connectedClientNum][1], i, panelColour);
 
 		// calculate where to draw the text
 		int xPos = 15;
@@ -183,7 +192,8 @@ void ofApp::drawControlPanel(float x, float y, int clientID, int backgroundColou
 	// draw client bounding box
 	ofSetColor(backgroundColour[0],backgroundColour[1],backgroundColour[2]);
 	ofDrawRectangle(x, y, clientPanelSize, clientPanelSize);
-
+	ofSetColor(0);
+	ofDrawBitmapString(statusNames[clientStatuses[clientID]], x + 5, y + 10);
 	//draw refresh button at bottom of panel
 	//add drawn button coords to collection of refresh buttons
 	refreshButtons.insert({ 
@@ -258,10 +268,9 @@ void ofApp::mousePressed(int x, int y, int button){
 	//loops through each client, ignores if client is no longer connected
 	for (unsigned int i = 0; i < (unsigned int)TCP.getLastID(); i++) {
 		if (!TCP.isClientConnected(i))continue;
-
+		int clientStatus = clientStatuses[i];
 		//will only accept new instructions if the client is currently idle
-		if (clientStatuses[i] == IDLE)continue;
-
+		if (clientStatus == IDLE)continue;
 		//----------------------------send image-------------------
 		//check if a refresh button has been pressed
 		if (checkCollides(x, y, refreshButtons[i])) {
@@ -278,7 +287,7 @@ void ofApp::mousePressed(int x, int y, int button){
 		//change image order 
 		//send new list (of image names) to client
 		//may need its own UI element for this, either dragging&dropping, typing in some text box or selecting order from dropdowns
-
+		int mousePos = x;
 	//update/replace image - may be needed, but not 100% necessary
 
 	//remove image
@@ -289,11 +298,11 @@ void ofApp::mousePressed(int x, int y, int button){
 
 
 
-bool ofApp::checkCollides(int x, int y, tuple<int, int, int, int> buttonCoords) {
-	int x1 = get<0>(buttonCoords);
-	int y1 = get<1>(buttonCoords);
-	int x2 = get<2>(buttonCoords);
-	int y2 = get<3>(buttonCoords);
+bool ofApp::checkCollides(int x, int y, tuple<float, float, float, float> buttonCoords) {
+	float x1 = get<0>(buttonCoords);
+	float y1 = get<1>(buttonCoords);
+	float x2 = get<2>(buttonCoords);
+	float y2 = get<3>(buttonCoords);
 
 	//check if coordinates lie within specified box
 	if (x > x1 && x < x2 && y > y1 && y < y2) {
