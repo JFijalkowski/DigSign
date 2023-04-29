@@ -26,8 +26,8 @@ class ofApp : public ofBaseApp{
 		void gotMessage(ofMessage msg);
 		void sendInstruction();
 
-		void drawControlPanel(float x, float y, int clientID, int backgroundColour[3]);
-		tuple<int, int, int, int> drawButton(float x, float y, float width, float height, int backgroundColour[3], string text);
+		void drawControlPanel(int x, int y, int clientID, int backgroundColour[3]);
+		tuple<int, int, int, int> drawButton(int x, int y, int width, int height, int backgroundColour[3], string text);
 		bool checkCollides(int x, int y, tuple<int, int, int, int> buttonCoords);
 
 		ofxTCPServer TCP;

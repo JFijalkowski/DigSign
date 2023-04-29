@@ -33,7 +33,7 @@ const int refreshButtonWidth = 200;
 const int refreshButtonHeight = 50;
 
 int refreshButtonColour[] = { 50, 150, 50 };
-const float panelCoords[4][2] = { {25,100}, {275, 100}, {525, 100}, {775, 100} };
+const int panelCoords[4][2] = { {25,100}, {275, 100}, {525, 100}, {775, 100} };
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -188,7 +188,7 @@ void ofApp::draw(){
 }
 
 //method to draw a controls box for a connected client at a given coordinate
-void ofApp::drawControlPanel(float x, float y, int clientID, int backgroundColour[3]) {
+void ofApp::drawControlPanel(int x, int y, int clientID, int backgroundColour[3]) {
 	// draw client bounding box
 	ofSetColor(backgroundColour[0],backgroundColour[1],backgroundColour[2]);
 	ofDrawRectangle(x, y, clientPanelSize, clientPanelSize);
@@ -209,7 +209,7 @@ void ofApp::drawControlPanel(float x, float y, int clientID, int backgroundColou
 //draw a button at coordinates x,y of specified width, height and colour
 //draws provided text on left of button (with some padding)
 //could add an offset parameter to jank in some text alignment
-tuple<float, float, float, float> ofApp::drawButton(float x, float y, float width, float height, int backgroundColour[3], string label) {
+tuple<int, int, int, int> ofApp::drawButton(int x, int y, int width, int height, int backgroundColour[3], string label) {
 	
 	ofSetColor(backgroundColour[0], backgroundColour[1], backgroundColour[2]);
 	ofDrawRectangle(x, y, width, height);
@@ -218,7 +218,7 @@ tuple<float, float, float, float> ofApp::drawButton(float x, float y, float widt
 	ofSetColor(255);
 	ofDrawBitmapString("Refresh", (x + (width * 0.1)), (y + (height * 0.66)));
 
-	tuple <float, float, float, float> buttonCoords = { x,y, x + width, y + width };
+	tuple <int, int, int, int> buttonCoords = { x,y, x + width, y + width };
 	return buttonCoords;
 
 }
@@ -269,8 +269,9 @@ void ofApp::mousePressed(int x, int y, int button){
 	for (unsigned int i = 0; i < (unsigned int)TCP.getLastID(); i++) {
 		if (!TCP.isClientConnected(i))continue;
 		int clientStatus = clientStatuses[i];
+		bool idle = (clientStatus == IDLE);
 		//will only accept new instructions if the client is currently idle
-		if (clientStatus == IDLE)continue;
+		if (clientStatus != IDLE)continue;
 		//----------------------------send image-------------------
 		//check if a refresh button has been pressed
 		if (checkCollides(x, y, refreshButtons[i])) {
@@ -298,14 +299,15 @@ void ofApp::mousePressed(int x, int y, int button){
 
 
 
-bool ofApp::checkCollides(int x, int y, tuple<float, float, float, float> buttonCoords) {
-	float x1 = get<0>(buttonCoords);
-	float y1 = get<1>(buttonCoords);
-	float x2 = get<2>(buttonCoords);
-	float y2 = get<3>(buttonCoords);
+bool ofApp::checkCollides(int x, int y, tuple<int, int, int, int> buttonCoords) {
+	int x1 = get<0>(buttonCoords);
+	int y1 = get<1>(buttonCoords);
+	int x2 = get<2>(buttonCoords);
+	int y2 = get<3>(buttonCoords);
+
 
 	//check if coordinates lie within specified box
-	if (x > x1 && x < x2 && y > y1 && y < y2) {
+	if ((x > x1) && (x < x2) && (y > y1) && (y < y2)) {
 		return true;
 	}
 	else {
