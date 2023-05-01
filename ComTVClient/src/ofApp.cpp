@@ -1,4 +1,5 @@
 #include "ofApp.h"
+#include <iostream>
 
 #define RECONNECT_TIME 400
 
@@ -36,34 +37,55 @@ void ofApp::update(){
 		//client has just connected to server
 		if (connectStatus == 0) {
 			tcpClient.send("Client connected!");
+			cout << "Connected! \n";
 			connectStatus = 1;
 		}
 		// client waiting for bytestream
 		if (imgReceiveStatus == 2) {
-			//number of bytes in the image, assuming 3-channel colour (JPG)
-			// 
-			//width x height x 3 when image type is JPG
-			int imgSize = imgHeight * imgWidth * 3;
-			if (receivedImageType == OF_IMAGE_COLOR_ALPHA) {
-				//if png has been sent, 4 bytes per pixel
-				imgSize = imgHeight * imgWidth * 4;
-			}
 			
 			char* receivedBytes{};
 			ofBuffer buffer;
 			buffer.allocate(imgSize);
 			int totalBytes = 0;
+			cout << "Started img receive \n";
 			while (totalBytes < imgSize) {
+				cout << "waiting for bytes\n";
 				int result = tcpClient.receiveRawBytes(&buffer.getBinaryBuffer()[totalBytes], imgSize - totalBytes);
 				if (result > 0) {
 					totalBytes += result;
+					cout << totalBytes << "\n";
 					if (totalBytes == imgSize) {
 						receivedImg.setFromPixels((unsigned char*)buffer.getData() , imgWidth, imgHeight, receivedImageType);
 						receivedImg.save(receivedImgName);
+						tcpClient.send("Image Received");
 						imgReceiveStatus = 0;
+						
 					}
 				}
 			}
+			/*
+			bool dataRecd = false;
+        unsigned char buffer[7800];
+        int recd = 7800;
+        int totalReceived = 0;
+        int messageSize = 256;
+        while(recd > 0) {
+
+            if(recd > messageSize) {
+                tcpClient.receiveRawBytes( (char*) &buffer[totalReceived], messageSize);
+                recd -= messageSize;
+                totalReceived += messageSize;
+            } else {
+                tcpClient.receiveRawBytes( (char*) &buffer[totalReceived], recd);
+                totalReceived += recd;
+                recd = 0;
+                dataRecd = true;
+            }
+        }
+
+        if(dataRecd) {
+            img.setFromPixels( &buffer[0], 50, 52, OF_IMAGE_COLOR);
+        }*/
 		}
 		//otherwise client will be receiving string values
 		else {
@@ -77,16 +99,18 @@ void ofApp::update(){
 					imgReceiveStatus = 1;
 				}
 				else if (imgReceiveStatus == 1) {
-					//expecting metadata string = width, height, filename
+					//expecting metadata string = width, height, filename, filesize (in bytes)
 					
 					//split on commas to get list/vector of values
 					vector <string> metadata = ofSplitString(str, ",");
 
-					//if message has split into 3 values, (assume) message is the metadata
-					if (metadata.size() == 3) {
+					//if message has split into 4 values, (assume) message is the metadata
+					if (metadata.size() == 4) {
 						imgWidth = ofToInt(metadata[0]);
 						imgHeight = ofToInt(metadata[1]);
 						receivedImgName = metadata[2];
+						//imgSize automatically adjusts if more bytes per pixel (Eg: PNG)
+						imgSize = ofToInt(metadata[3]);
 						string filetype = receivedImgName.substr(receivedImgName.size() - 3);
 						receivedImageType = OF_IMAGE_COLOR;
 						if (filetype == "png") {
@@ -129,7 +153,7 @@ void ofApp::draw(){
 			ofDrawBitmapString(msgTx, 85, 55);
 		}
 		else {
-			ofDrawBitmapString("status: type something to send data to port 11999", 15, 55);
+			ofDrawBitmapString("status:" + ofToString(imgReceiveStatus), 15, 55);
 		}
 		ofDrawBitmapString("from server: \n" + msgRx, 15, 270);
 	}

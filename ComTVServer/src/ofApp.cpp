@@ -11,13 +11,15 @@ const int IDLE = 0;
 const int START_IMG_SEND = 1;
 const int SEND_IMG_METADATA = 2;
 const int SEND_IMG_DATA = 3;
-const int SEND_DISPLAY_SCHEDULE = 4;
-const int REMOVE_IMAGE = 5;
+const int SENT_IMG_DATA = 4;
+const int SEND_DISPLAY_SCHEDULE = 5;
+const int REMOVE_IMAGE = 6;
 
 const string statusNames[] = { "Idle",
 	"Starting Image Send...",
 	"Sending Image Metadata...",
 	"Sending Image Data...",
+	"Sent Image Data, awaiting confirmation...",
 	"Sending Display Schedule",
 	"Removing Image" };
 //add some constants for messages (eg: "Client Connected" so no mismatch occurs)
@@ -75,11 +77,13 @@ void ofApp::update() {
 			do {
 				str = tmp;
 				tmp = TCP.receive(i);
+				if (tmp !=""){ cout <<"RECEIVED: " << tmp << "\n"; }
 			} while (tmp != "");
 
 			if (str == "Client connected!") {
 				//client has just connected, start tracking their status
 				clientStatuses[i] = IDLE;
+				cout << "Client Connected\n";
 			}
 			lastSent = now;
 
@@ -93,25 +97,58 @@ void ofApp::update() {
 			if (clientStatus == START_IMG_SEND) {
 				TCP.send(i, "Sending Image");
 				clientStatuses[i] = SEND_IMG_METADATA;
+				cout << "Sending image\n"; 
 			}
 			//load image and send metadata
 			else if (clientStatus == SEND_IMG_METADATA) {
 				string imgName = "testimg.jpg";
 				//load image to send
-				img.load(imgName);
+				img.loadImage(imgName);
 				//convert image to bytestream
 				int width = img.getWidth();
 				int height = img.getHeight();
-				//format: width,height,filename
-				TCP.send(i, (ofToString(width) + "," + ofToString(height) + "," + imgName));
+				imgSize = img.getPixels().size() * 8;
+				//format: width,height,filename, filesize
+				TCP.send(i, (ofToString(width) + "," + ofToString(height) + "," + imgName + "," + ofToString(imgSize)));
+				cout << "Sent Metadata\n";
 				clientStatuses[i] = SEND_IMG_DATA;
-				//image data is sent immediately so the client doesn't accidentally read any other information as the data bytestream
-				TCP.sendRawBytes(i, (const char*)img.getPixels().getData(), (width * height * 3));
 			}
+			else if (clientStatus == SEND_IMG_DATA) {
+				ofPixels imgPixels = img.getPixels();
+				unsigned char* imgData = imgPixels.getData();
+				int imgSizeBytes = imgPixels.size() * 8;
+				cout << "Image Bytes: " << imgSizeBytes << "\n";
+				cout << "imgSize: " << imgSize << "\n";
+				
+				//send image data to client
+				TCP.sendRawBytes(i, (const char*)imgData, imgSize);
+				cout << "sent image data\n";
+				clientStatuses[i] = SENT_IMG_DATA;
+			}
+			/*
+			ofImage img;
+        img.loadImage("tmp.jpg");
+        int imageBytesToSend = 7800;
+        int totalBytesSent = 0;
+        int messageSize = 256;
+        while( imageBytesToSend > 1 )
+        {
+
+            if(imageBytesToSend > messageSize) {
+                TCP.sendRawBytesToAll((char*) &img.getPixels()[totalBytesSent], messageSize);
+                imageBytesToSend -= messageSize;
+                totalBytesSent += messageSize;
+            } else {
+                TCP.sendRawBytesToAll( (char*) &img.getPixels()[totalBytesSent], imageBytesToSend);
+                totalBytesSent += imageBytesToSend;
+                imageBytesToSend = 0;
+            }
+        }*/
 			//client sends confirmation message when image has been recieved
-			else if (clientStatus == SEND_IMG_DATA && str == "Image Received") {
+			else if (clientStatus == SENT_IMG_DATA && str == "Image Received") {
 				//client is able to receive new instructions
 				clientStatuses[i] = IDLE;
+				cout << "Image sent\n";
 			}
 			
 		}
@@ -193,7 +230,7 @@ void ofApp::drawControlPanel(int x, int y, int clientID, int backgroundColour[3]
 	ofSetColor(backgroundColour[0],backgroundColour[1],backgroundColour[2]);
 	ofDrawRectangle(x, y, clientPanelSize, clientPanelSize);
 	ofSetColor(0);
-	ofDrawBitmapString(statusNames[clientStatuses[clientID]], x + 5, y + 10);
+	ofDrawBitmapString(statusNames[clientStatuses[clientID]], x + 5, y + 15);
 	//draw refresh button at bottom of panel
 	//add drawn button coords to collection of refresh buttons
 	refreshButtons.insert({ 

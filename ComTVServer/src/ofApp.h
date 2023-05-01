@@ -41,6 +41,7 @@ class ofApp : public ofBaseApp{
 		vector <string> storeText;
 		uint64_t lastSent;
 		ofImage img;
+		int imgSize = 0;
 
 		map <int, int> clientStatuses;
 		map <int, string> displayedImages;
