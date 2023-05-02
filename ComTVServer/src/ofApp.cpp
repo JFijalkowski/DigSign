@@ -101,13 +101,14 @@ void ofApp::update() {
 			}
 			//load image and send metadata
 			else if (clientStatus == SEND_IMG_METADATA) {
-				string imgName = "testimg.jpg";
+				string imgName = "testimg2.jpg";
 				//load image to send
-				img.loadImage(imgName);
+				img.load(imgName);
 				//convert image to bytestream
 				int width = img.getWidth();
 				int height = img.getHeight();
-				imgSize = img.getPixels().size() * 8;
+				imgSize = width * height * 3;
+				//cout << img.getPixels().getData();
 				//format: width,height,filename, filesize
 				TCP.send(i, (ofToString(width) + "," + ofToString(height) + "," + imgName + "," + ofToString(imgSize)));
 				cout << "Sent Metadata\n";
@@ -116,12 +117,28 @@ void ofApp::update() {
 			else if (clientStatus == SEND_IMG_DATA) {
 				ofPixels imgPixels = img.getPixels();
 				unsigned char* imgData = imgPixels.getData();
-				int imgSizeBytes = imgPixels.size() * 8;
-				cout << "Image Bytes: " << imgSizeBytes << "\n";
 				cout << "imgSize: " << imgSize << "\n";
+				int bytesRemaining = imgSize;
+				int messageSize = 256;
+				int bytesSent = 0;
+				cout << "Sending image";
+				//send image data	to client
+				while (bytesRemaining > 1) {
+					cout << bytesSent<< "\n";
+					if (bytesRemaining > messageSize) {
+						TCP.sendRawBytes(i, (char*)&img.getPixels()[bytesSent], messageSize);
+						bytesRemaining -= messageSize;
+						bytesSent += messageSize;
+					}
+					else {
+						cout << "Last message: " << bytesRemaining << "\n";
+						TCP.sendRawBytes(i, (char*)&img.getPixels()[bytesSent], bytesRemaining);
+						bytesSent += bytesRemaining;
+						bytesRemaining = 0;
+					}
+				}
 				
-				//send image data to client
-				TCP.sendRawBytes(i, (const char*)imgData, imgSize);
+				//TCP.sendRawBytes(i, (const char*)imgData, imgSize);
 				cout << "sent image data\n";
 				clientStatuses[i] = SENT_IMG_DATA;
 			}
@@ -196,30 +213,6 @@ void ofApp::draw(){
 		string ip = TCP.getClientIP(i);
 		string info = "client " + ofToString(i) + " -connected from " + ip + " on port: " + port;
 
-
-		// if we don't have a string allocated yet
-		// lets create one
-		if (i >= storeText.size()) {
-			storeText.push_back(string());
-		}
-
-		// receive all the available messages, separated by \n
-		// and keep only the last one
-		string str;
-		string tmp;
-		do {
-			str = tmp;
-			tmp = TCP.receive(i);
-		} while (tmp != "");
-
-		// if there was a message set it to the corresponding client
-		if (str.length() > 0) {
-			storeText[i] = str;
-		}
-
-		// draw the info text and the received text bellow it
-		ofDrawBitmapString(info, xPos, yPos);
-		ofDrawBitmapString(storeText[i], 25, yPos + 20);
 	}
 	//gui.draw();
 }

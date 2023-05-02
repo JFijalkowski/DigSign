@@ -42,57 +42,51 @@ void ofApp::update(){
 		}
 		// client waiting for bytestream
 		if (imgReceiveStatus == 2) {
-			
-			char* receivedBytes{};
+
+			bool receivedAll = false;
 			ofBuffer buffer;
 			buffer.allocate(imgSize);
-			int totalBytes = 0;
+			int receivedBytes = 0;
+			int remainingBytes = imgSize;
+			int messageSize = 256;
 			cout << "Started img receive \n";
-			while (totalBytes < imgSize) {
-				cout << "waiting for bytes\n";
-				int result = tcpClient.receiveRawBytes(&buffer.getBinaryBuffer()[totalBytes], imgSize - totalBytes);
-				if (result > 0) {
-					totalBytes += result;
-					cout << totalBytes << "\n";
-					if (totalBytes == imgSize) {
-						receivedImg.setFromPixels((unsigned char*)buffer.getData() , imgWidth, imgHeight, receivedImageType);
-						receivedImg.save(receivedImgName);
-						tcpClient.send("Image Received");
-						imgReceiveStatus = 0;
-						
+			//listen for message chunks until all bytes received
+			while (remainingBytes > 0) {
+				cout << remainingBytes << "\n";
+				if (remainingBytes > messageSize) {
+					int result = tcpClient.receiveRawBytes((char*)&buffer.getBinaryBuffer()[receivedBytes], messageSize);
+					if (result > 0){
+						remainingBytes -= messageSize;
+						receivedBytes += messageSize;
 					}
 				}
+				else {
+					cout << "last chunk left: " << remainingBytes << "\n";
+					tcpClient.receiveRawBytes((char*)&buffer.getBinaryBuffer()[receivedBytes], remainingBytes);
+					receivedBytes += remainingBytes;
+					remainingBytes = 0;
+					receivedAll = true;
+				}
 			}
-			/*
-			bool dataRecd = false;
-        unsigned char buffer[7800];
-        int recd = 7800;
-        int totalReceived = 0;
-        int messageSize = 256;
-        while(recd > 0) {
-
-            if(recd > messageSize) {
-                tcpClient.receiveRawBytes( (char*) &buffer[totalReceived], messageSize);
-                recd -= messageSize;
-                totalReceived += messageSize;
-            } else {
-                tcpClient.receiveRawBytes( (char*) &buffer[totalReceived], recd);
-                totalReceived += recd;
-                recd = 0;
-                dataRecd = true;
-            }
-        }
-
-        if(dataRecd) {
-            img.setFromPixels( &buffer[0], 50, 52, OF_IMAGE_COLOR);
-        }*/
+			//if all data obtained, save image
+			if (receivedAll) {
+				cout << "saving image\n";
+				receivedImg.setFromPixels((unsigned char*)buffer.getData(), imgWidth, imgHeight, receivedImgType);
+				receivedImg.save(receivedImgName);
+				//send confirmation
+				tcpClient.send("Image Received");
+				imgReceiveStatus = 0;
+			}
 		}
+		
 		//otherwise client will be receiving string values
 		else {
 			// receive string/text message from server
 			string str = tcpClient.receive();
 			
 			if (str.length() > 0) {
+				cout << "received: \n";
+				cout << str << "\n";
 				msgStore.push_back(str);
 				if (str == "Sending Image" && imgReceiveStatus == 0) {
 					//begin receiving image
@@ -112,9 +106,9 @@ void ofApp::update(){
 						//imgSize automatically adjusts if more bytes per pixel (Eg: PNG)
 						imgSize = ofToInt(metadata[3]);
 						string filetype = receivedImgName.substr(receivedImgName.size() - 3);
-						receivedImageType = OF_IMAGE_COLOR;
+						receivedImgType = OF_IMAGE_COLOR;
 						if (filetype == "png") {
-							receivedImageType = OF_IMAGE_COLOR_ALPHA;
+							receivedImgType = OF_IMAGE_COLOR_ALPHA;
 						}
 						//image metadata has been received, wait for image bytestream
 						imgReceiveStatus = 2;

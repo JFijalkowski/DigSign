@@ -41,7 +41,7 @@ class ofApp : public ofBaseApp{
 		int imgHeight;
 		int imgSize;
 		ofImage receivedImg;
-		ofImageType receivedImageType;
+		ofImageType receivedImgType;
 		string receivedImgName;
 		vector <string> msgStore;
 
