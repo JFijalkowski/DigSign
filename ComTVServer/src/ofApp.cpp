@@ -49,6 +49,7 @@ void ofApp::setup(){
 	//settings.reuse = true;
 	//settings.messageDelimiter = "\n";
 
+	getAvailableImages();
 	TCP.setup(settings);
 
 	// optionally set the delimiter to something else.  The delimiter in the client and the server have to be the same, default being [/TCP]
@@ -114,6 +115,7 @@ void ofApp::update() {
 				cout << "Sent Metadata\n";
 				clientStatuses[i] = SEND_IMG_DATA;
 			}
+
 			else if (clientStatus == SEND_IMG_DATA) {
 				ofPixels imgPixels = img.getPixels();
 				unsigned char* imgData = imgPixels.getData();
@@ -142,25 +144,6 @@ void ofApp::update() {
 				cout << "sent image data\n";
 				clientStatuses[i] = SENT_IMG_DATA;
 			}
-			/*
-			ofImage img;
-        img.loadImage("tmp.jpg");
-        int imageBytesToSend = 7800;
-        int totalBytesSent = 0;
-        int messageSize = 256;
-        while( imageBytesToSend > 1 )
-        {
-
-            if(imageBytesToSend > messageSize) {
-                TCP.sendRawBytesToAll((char*) &img.getPixels()[totalBytesSent], messageSize);
-                imageBytesToSend -= messageSize;
-                totalBytesSent += messageSize;
-            } else {
-                TCP.sendRawBytesToAll( (char*) &img.getPixels()[totalBytesSent], imageBytesToSend);
-                totalBytesSent += imageBytesToSend;
-                imageBytesToSend = 0;
-            }
-        }*/
 			//client sends confirmation message when image has been recieved
 			else if (clientStatus == SENT_IMG_DATA && str == "Image Received") {
 				//client is able to receive new instructions
@@ -256,16 +239,21 @@ tuple<int, int, int, int> ofApp::drawButton(int x, int y, int width, int height,
 //split by button function
 //key matches client id, so same value can be used to determine which client to send messages to
 // 
-//need constants for statuses, similar to clients
-//track instruction status for each client (maybe can be used during drawing to show current progress
-//to do that, make a map/dictionary of status code to description, so you can show a readable english description of what a client is doing
-// awaiting instruction/idle/working ok
-// instruction done
-// beginning img send, sending image metadata, sending image
-// sending new img display list
-// removing img
-// etc
-//
+
+//get names of image files in filesystem and update stored list
+void ofApp::getAvailableImages() {
+	vector<string> imageList = {};
+	ofDirectory dir = ofDirectory("");
+	cout << "Getting available images\n";
+	for (ofFile file : dir.getFiles()) {
+		//add check for just image files (in case other files are accidentally in the directory)
+		if ((file.getExtension() == "jpg")||(file.getExtension() == "png")) {
+			imageList.push_back(file.getBaseName());
+			cout << file.getFileName() << "\n";
+		}
+	}
+	images = imageList;
+}
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
@@ -287,9 +275,6 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 }
 
-void ofApp::sendInstruction() {
-	TCP.send(1, "message");
-}
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){

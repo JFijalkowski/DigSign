@@ -24,7 +24,8 @@ class ofApp : public ofBaseApp{
 		void windowResized(int w, int h);
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
-		void sendInstruction();
+
+		void getAvailableImages();
 
 		void drawControlPanel(int x, int y, int clientID, int backgroundColour[3]);
 		tuple<int, int, int, int> drawButton(int x, int y, int width, int height, int backgroundColour[3], string text);
@@ -39,6 +40,7 @@ class ofApp : public ofBaseApp{
 		ofxButton clientPing;
 
 		vector <string> storeText;
+		vector <string> images;
 		uint64_t lastSent;
 		ofImage img;
 		int imgSize = 0;
