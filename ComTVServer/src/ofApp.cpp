@@ -91,70 +91,87 @@ void ofApp::update() {
 			//carry out client action
 			int clientStatus = clientStatuses[i];
 
+			handleClient(clientStatus, i, str);
 
-			//---------------------send image--------------------------
-
-			//notify client image is going to be sent
-			if (clientStatus == START_IMG_SEND) {
-				TCP.send(i, "Sending Image");
-				clientStatuses[i] = SEND_IMG_METADATA;
-				cout << "Sending image\n"; 
-			}
-			//load image and send metadata
-			else if (clientStatus == SEND_IMG_METADATA) {
-				string imgName = "testimg2.jpg";
-				//load image to send
-				img.load(imgName);
-				//convert image to bytestream
-				int width = img.getWidth();
-				int height = img.getHeight();
-				imgSize = width * height * 3;
-				//cout << img.getPixels().getData();
-				//format: width,height,filename, filesize
-				TCP.send(i, (ofToString(width) + "," + ofToString(height) + "," + imgName + "," + ofToString(imgSize)));
-				cout << "Sent Metadata\n";
-				clientStatuses[i] = SEND_IMG_DATA;
-			}
-
-			else if (clientStatus == SEND_IMG_DATA) {
-				ofPixels imgPixels = img.getPixels();
-				unsigned char* imgData = imgPixels.getData();
-				cout << "imgSize: " << imgSize << "\n";
-				int bytesRemaining = imgSize;
-				int messageSize = 256;
-				int bytesSent = 0;
-				cout << "Sending image";
-				//send image data	to client
-				while (bytesRemaining > 1) {
-					cout << bytesSent<< "\n";
-					if (bytesRemaining > messageSize) {
-						TCP.sendRawBytes(i, (char*)&img.getPixels()[bytesSent], messageSize);
-						bytesRemaining -= messageSize;
-						bytesSent += messageSize;
-					}
-					else {
-						cout << "Last message: " << bytesRemaining << "\n";
-						TCP.sendRawBytes(i, (char*)&img.getPixels()[bytesSent], bytesRemaining);
-						bytesSent += bytesRemaining;
-						bytesRemaining = 0;
-					}
-				}
-				
-				//TCP.sendRawBytes(i, (const char*)imgData, imgSize);
-				cout << "sent image data\n";
-				clientStatuses[i] = SENT_IMG_DATA;
-			}
-			//client sends confirmation message when image has been recieved
-			else if (clientStatus == SENT_IMG_DATA && str == "Image Received") {
-				//client is able to receive new instructions
-				clientStatuses[i] = IDLE;
-				cout << "Image sent\n";
-			}
+			
 			
 		}
 
 	}
 }
+
+//wrapper function for managing communication to/from a particular client
+void ofApp::handleClient(int clientStatus, int clientID, string lastMessage) {
+	
+	//---------------------SENDING AN IMAGE--------------------------
+
+	//notify client image is going to be sent
+	if (clientStatus == START_IMG_SEND) {
+		TCP.send(clientID, "Sending Image");
+		clientStatuses[clientID] = SEND_IMG_METADATA;
+		cout << "Sending image\n";
+	}
+	//load image and send metadata
+	else if (clientStatus == SEND_IMG_METADATA) {
+		string imgName = images[imgQueue[clientID]-1];
+		cout << imgName << "\n";
+		//load image to send
+		img.load(imgName);
+		//convert image to bytestream
+		int width = img.getWidth();
+		int height = img.getHeight();
+		imgSize = width * height * 3;
+		//cout << img.getPixels().getData();
+		//format: width,height,filename, filesize
+		TCP.send(clientID, (ofToString(width) + "," + ofToString(height) + "," + imgName + "," + ofToString(imgSize)));
+		cout << "Sent Metadata\n";
+		clientStatuses[clientID] = SEND_IMG_DATA;
+	}
+
+	else if (clientStatus == SEND_IMG_DATA) {
+		ofPixels imgPixels = img.getPixels();
+		unsigned char* imgData = imgPixels.getData();
+		cout << "imgSize: " << imgSize << "\n";
+		int bytesRemaining = imgSize;
+		int messageSize = 256;
+		int bytesSent = 0;
+		cout << "Sending image";
+		//send image data	to client
+		while (bytesRemaining > 1) {
+			cout << bytesSent << "\n";
+			if (bytesRemaining > messageSize) {
+				TCP.sendRawBytes(clientID, (char*)&img.getPixels()[bytesSent], messageSize);
+				bytesRemaining -= messageSize;
+				bytesSent += messageSize;
+			}
+			else {
+				cout << "Last message: " << bytesRemaining << "\n";
+				TCP.sendRawBytes(clientID, (char*)&img.getPixels()[bytesSent], bytesRemaining);
+				bytesSent += bytesRemaining;
+				bytesRemaining = 0;
+			}
+		}
+
+		//TCP.sendRawBytes(i, (const char*)imgData, imgSize);
+		cout << "sent image data\n";
+		clientStatuses[clientID] = SENT_IMG_DATA;
+	}
+	//client sends confirmation message when image has been recieved
+	else if (clientStatus == SENT_IMG_DATA && lastMessage == "Image Received") {
+		//client is able to receive new instructions
+		clientStatuses[clientID] = IDLE;
+		cout << "Image sent\n";
+
+		imgQueue[clientID] -= 1;
+		//if there's still some images left in the client's queue, start sending again
+		if (imgQueue[clientID] > 0) {
+			//move to next image in queue
+			clientStatuses[clientID] = START_IMG_SEND;
+
+		}
+	}
+}
+
 
 //--------------------------------------------------------------
 void ofApp::draw(){
@@ -248,10 +265,11 @@ void ofApp::getAvailableImages() {
 	for (ofFile file : dir.getFiles()) {
 		//add check for just image files (in case other files are accidentally in the directory)
 		if ((file.getExtension() == "jpg")||(file.getExtension() == "png")) {
-			imageList.push_back(file.getBaseName());
+			imageList.push_back(file.getFileName());
 			cout << file.getFileName() << "\n";
 		}
 	}
+	
 	images = imageList;
 }
 
@@ -290,6 +308,9 @@ void ofApp::mousePressed(int x, int y, int button){
 		//----------------------------send image-------------------
 		//check if a refresh button has been pressed
 		if (checkCollides(x, y, refreshButtons[i])) {
+			//update list of available images to send
+			getAvailableImages();
+			imgQueue[i] = images.size();
 			clientStatuses[i] = START_IMG_SEND;
 			//call func for refreshing client i
 			
@@ -313,7 +334,6 @@ void ofApp::mousePressed(int x, int y, int button){
 
 
 
-
 bool ofApp::checkCollides(int x, int y, tuple<int, int, int, int> buttonCoords) {
 	int x1 = get<0>(buttonCoords);
 	int y1 = get<1>(buttonCoords);
@@ -330,6 +350,8 @@ bool ofApp::checkCollides(int x, int y, tuple<int, int, int, int> buttonCoords) 
 	}
 
 }
+
+
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){

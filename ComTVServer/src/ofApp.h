@@ -27,8 +27,11 @@ class ofApp : public ofBaseApp{
 
 		void getAvailableImages();
 
+		void handleClient(int clientStatus, int clientID, string lastMessage);
+
 		void drawControlPanel(int x, int y, int clientID, int backgroundColour[3]);
 		tuple<int, int, int, int> drawButton(int x, int y, int width, int height, int backgroundColour[3], string text);
+
 		bool checkCollides(int x, int y, tuple<int, int, int, int> buttonCoords);
 
 		ofxTCPServer TCP;
@@ -40,13 +43,24 @@ class ofApp : public ofBaseApp{
 		ofxButton clientPing;
 
 		vector <string> storeText;
+		//vector of images in filesystem
 		vector <string> images;
+
 		uint64_t lastSent;
 		ofImage img;
 		int imgSize = 0;
 
+		//link client id to its status
 		map <int, int> clientStatuses;
+
+		//link client id to img send queue (for sending multiple images while refreshing)
+		//value is number of images remaining in queue (send all available images in order)
+		map <int, int> imgQueue;
+
+		//link client id to current image displayed on client (to potentially draw thumbnail of what's displaying)
 		map <int, string> displayedImages;
+
+		//link client id to coords for its refresh button 
 		map <int, tuple<int, int, int, int>> refreshButtons;
 
 		
