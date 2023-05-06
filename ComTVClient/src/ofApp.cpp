@@ -5,7 +5,7 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-	ofSetBackgroundColor(230);
+	ofSetBackgroundColor(255);
 
 	// our send and recieve strings
 	msgTx = "";
@@ -29,6 +29,8 @@ void ofApp::setup(){
 
 	connectStatus = 0;
 	imgReceiveStatus = 0;
+
+	schedule = { {"testimg.jpg", 5000}, {"testimg2.jpg", 5000} };
 }
 
 //--------------------------------------------------------------
@@ -157,6 +159,33 @@ void ofApp::draw(){
 	//draw received messages from server
 	for (unsigned int i = 0; i < msgStore.size(); i++) {
 		ofDrawBitmapString(msgStore[i], 300, 300 + (15 * i));
+	}
+
+
+
+	//draw stored images on schedule
+	displayElapsedTime = ofGetElapsedTimeMillis() - displayStartTime;
+	//if image has not been displayed for full scheduled time yet
+	if (displayElapsedTime < displayTime) {
+		//for now, just draw image as normal size (may need to be stretched to fit, or cropped for full-size)
+		image.draw(500, 500);
+	}
+	//current image has been displayed for scheduled duration
+	else {
+		displayedImgNum++;
+		//if end of schedule, start at beginning
+		if (displayedImgNum >= schedule.size()) {
+			displayedImgNum = 0;
+		}
+		//update current display start time
+		displayStartTime = ofGetElapsedTimeMillis();
+		//get filename and duration for new image
+		tuple<string, int> newSchedule = schedule[displayedImgNum];
+		//load new image
+		image.load(get<0>(newSchedule));
+		//set display duration
+		displayTime = get<1>(newSchedule);
+		cout << "displaying image: " << get<0>(newSchedule) << "\n";
 	}
 }
 

@@ -45,5 +45,29 @@ class ofApp : public ofBaseApp{
 		string receivedImgName;
 		vector <string> msgStore;
 
+		
+
+		//schedule of display
+		//position in list = order displayed
+		//stores tuple of image name and display duration
+		//when switching to new image, timer is set to attached duration value
+		vector<tuple<string, int>> schedule;
+
+		
+		//image being displayed
+		ofImage image;
+
+		//image (number) being displayed currently (position counter for scheduling)
+		int displayedImgNum;
+		//duration to display current image (in milliseconds)
+		int displayTime;
+
+		//time current image was displayed
+		int displayStartTime;
+		//time current image has been displayed for
+		int displayElapsedTime;
+
+
+
 	int size;
 };
