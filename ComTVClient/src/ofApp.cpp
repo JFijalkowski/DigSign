@@ -18,6 +18,8 @@ map<int, string> statusNames = {
 	{RECEIVE_DISPLAY_SCHEDULE, "Receiving Display Schedule"},
 	{REMOVE_IMAGE, "Removing Image"}};
 
+
+
 //--------------------------------------------------------------
 void ofApp::setup(){
 	ofSetBackgroundColor(255);
@@ -45,6 +47,11 @@ void ofApp::setup(){
 	status = DISCONNECTED;
 
 	schedule = { {"testimg.jpg", 5000}, {"testimg2.jpg", 5000} };
+	displayTime = get<1>(schedule[0]);
+	image.load(get<0>(schedule[0]));
+	displayElapsedTime = 0;
+	displayStartTime = ofGetElapsedTimeMillis();
+	fading = false;
 }
 
 //--------------------------------------------------------------
@@ -184,36 +191,71 @@ void ofApp::draw(){
 		ofDrawBitmapString(msgStore[i], 300, 300 + (15 * i));
 	}
 
-	//reset colour for drawing image (affects tint)
+	//reset colour for drawing image (affects image tint)
 	ofSetColor(255);
 
+	int currentTime = ofGetElapsedTimeMillis();
+
 	//draw stored images on schedule
-	displayElapsedTime = ofGetElapsedTimeMillis() - displayStartTime;
-	
+	displayElapsedTime = currentTime - displayStartTime;
+	fadeElapsed = currentTime - fadeStart;
 	//if image has not been displayed for full scheduled time yet
 	if (displayElapsedTime < displayTime) {
-		//for now, just draw image as normal size (may need to be stretched to fit, or cropped for full-size)
-		image.draw(500, 500, 300, 300);
+		//draw image as normal
+		image.draw(400, 400, 300, 300);
 	}
-	//current image has been displayed for scheduled duration
-	else {
-		displayedImgNum++;
-		//if end of schedule, start at beginning
-		if (displayedImgNum >= schedule.size()) {
-			displayedImgNum = 0;
-		}
+
+	//blend images if doing fade
+	else if (fading && (fadeElapsed < fadeDuration)) {
+		int fade = ((float) fadeElapsed / fadeDuration) * 255;
+		cout << "fading" << fade << "\n";
+
+		ofSetColor(255, 255, 255, 255-fade);
+		image.draw(400, 400, 300, 300);
+
+		ofSetColor(255, 255, 255, fade);
+		fadeImage.draw(400, 400, 300, 300);
+	}
+
+	//if image had finished fade, set up new image
+	else if (fading && (fadeElapsed >= fadeDuration)) {
+		cout << "finished fade \n";
+		fading = false;
+		
+		displayedImgNum = getNextImage();
+
 		//update current display start time
-		displayStartTime = ofGetElapsedTimeMillis();
+		displayStartTime = currentTime;
 		//get filename and duration for new image
 		tuple<string, int> newSchedule = schedule[displayedImgNum];
 		//load new image
 		image.load(get<0>(newSchedule));
 		//set display duration
 		displayTime = get<1>(newSchedule);
+		ofDisableAlphaBlending();
 		cout << "displaying image: " << get<0>(newSchedule) << "\n";
 	}
-}
 
+	//image has displayed for scheduled time, set up fade to next image
+	else {
+		cout << "Started Fade \n";
+		//set next image in queue to fade-in
+		fadeImage.load(get<0>(schedule[getNextImage()]));
+		//set start of fade
+		fadeStart = currentTime;
+		fading = true;
+		ofEnableAlphaBlending();
+
+	}
+}
+int ofApp::getNextImage() {
+	int imgNum = displayedImgNum + 1;
+	//if end of schedule, start at beginning
+	if (imgNum >= schedule.size()) {
+		imgNum = 0;
+	}
+	return imgNum;
+}
 //--------------------------------------------------------------
 void ofApp::keyPressed(ofKeyEventArgs& key){
 	// you can only type if you're connected

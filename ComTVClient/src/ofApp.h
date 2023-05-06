@@ -57,6 +57,15 @@ class ofApp : public ofBaseApp{
 		
 		//image being displayed
 		ofImage image;
+		ofImage fadeImage;
+
+		//fading between images
+		int getNextImage();
+		bool fading;
+		int fadeDuration = 2000;
+		int fadeStart;
+		int fadeElapsed;
+		
 
 		//image (number) being displayed currently (position counter for scheduling)
 		int displayedImgNum;
