@@ -94,8 +94,6 @@ void ofApp::update() {
 
 			handleClient(clientStatus, i, str);
 
-			
-			
 		}
 
 	}

@@ -208,7 +208,6 @@ void ofApp::draw(){
 	//blend images if doing fade
 	else if (fading && (fadeElapsed < fadeDuration)) {
 		int fade = ((float) fadeElapsed / fadeDuration) * 255;
-		cout << "fading" << fade << "\n";
 
 		ofSetColor(255, 255, 255, 255-fade);
 		image.draw(400, 400, 300, 300);
@@ -219,6 +218,7 @@ void ofApp::draw(){
 
 	//if image had finished fade, set up new image
 	else if (fading && (fadeElapsed >= fadeDuration)) {
+		ofDisableAlphaBlending();
 		cout << "finished fade \n";
 		fading = false;
 		
@@ -229,16 +229,19 @@ void ofApp::draw(){
 		//get filename and duration for new image
 		tuple<string, int> newSchedule = schedule[displayedImgNum];
 		//load new image
-		image.load(get<0>(newSchedule));
+		//image.load(get<0>(newSchedule));
+		image = fadeImage;
+		image.draw(400, 400, 300, 300);
 		//set display duration
 		displayTime = get<1>(newSchedule);
-		ofDisableAlphaBlending();
+		
 		cout << "displaying image: " << get<0>(newSchedule) << "\n";
 	}
 
 	//image has displayed for scheduled time, set up fade to next image
 	else {
 		cout << "Started Fade \n";
+		image.draw(400, 400, 300, 300);
 		//set next image in queue to fade-in
 		fadeImage.load(get<0>(schedule[getNextImage()]));
 		//set start of fade
