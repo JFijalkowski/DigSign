@@ -3,6 +3,21 @@
 
 #define RECONNECT_TIME 400
 
+//STATUS CODES
+const int DISCONNECTED = -1;
+const int IDLE = 0;
+const int RECEIVE_IMG_METADATA = 2;
+const int RECEIVE_IMG_DATA = 3;
+const int RECEIVE_DISPLAY_SCHEDULE = 4;
+const int REMOVE_IMAGE = 5;
+
+map<int, string> statusNames = {
+	{IDLE, "Idle"},
+	{RECEIVE_IMG_METADATA, "Receiving Image Metadata..."},
+	{RECEIVE_IMG_DATA, "Receiving Image Data..."},
+	{RECEIVE_DISPLAY_SCHEDULE, "Receiving Display Schedule"},
+	{REMOVE_IMAGE, "Removing Image"}};
+
 //--------------------------------------------------------------
 void ofApp::setup(){
 	ofSetBackgroundColor(255);
@@ -27,8 +42,7 @@ void ofApp::setup(){
 	connectTime = 0;
 	deltaTime = 0;
 
-	connectStatus = 0;
-	imgReceiveStatus = 0;
+	status = DISCONNECTED;
 
 	schedule = { {"testimg.jpg", 5000}, {"testimg2.jpg", 5000} };
 }
@@ -36,14 +50,15 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
 	if (tcpClient.isConnected()) {
+
 		//client has just connected to server
-		if (connectStatus == 0) {
+		if (status == DISCONNECTED) {
 			tcpClient.send("Client connected!");
 			cout << "Connected! \n";
-			connectStatus = 1;
+			status = IDLE;
 		}
 		// client waiting for bytestream
-		if (imgReceiveStatus == 2) {
+		if (status == RECEIVE_IMG_DATA) {
 
 			bool receivedAll = false;
 			ofBuffer buffer;
@@ -52,6 +67,7 @@ void ofApp::update(){
 			int remainingBytes = imgSize;
 			int messageSize = 256;
 			cout << "Started img receive \n";
+
 			//listen for message chunks until all bytes received
 			while (remainingBytes > 0) {
 				cout << remainingBytes << "\n";
@@ -77,7 +93,7 @@ void ofApp::update(){
 				receivedImg.save(receivedImgName);
 				//send confirmation
 				tcpClient.send("Image Received");
-				imgReceiveStatus = 0;
+				status = IDLE;
 			}
 		}
 		
@@ -86,35 +102,19 @@ void ofApp::update(){
 			// receive string/text message from server
 			string str = tcpClient.receive();
 			
+			//if message received from server
 			if (str.length() > 0) {
 				cout << "received: \n";
 				cout << str << "\n";
 				msgStore.push_back(str);
-				if (str == "Sending Image" && imgReceiveStatus == 0) {
-					//begin receiving image
-					imgReceiveStatus = 1;
-				}
-				else if (imgReceiveStatus == 1) {
-					//expecting metadata string = width, height, filename, filesize (in bytes)
-					
-					//split on commas to get list/vector of values
-					vector <string> metadata = ofSplitString(str, ",");
 
-					//if message has split into 4 values, (assume) message is the metadata
-					if (metadata.size() == 4) {
-						imgWidth = ofToInt(metadata[0]);
-						imgHeight = ofToInt(metadata[1]);
-						receivedImgName = metadata[2];
-						//imgSize automatically adjusts if more bytes per pixel (Eg: PNG)
-						imgSize = ofToInt(metadata[3]);
-						string filetype = receivedImgName.substr(receivedImgName.size() - 3);
-						receivedImgType = OF_IMAGE_COLOR;
-						if (filetype == "png") {
-							receivedImgType = OF_IMAGE_COLOR_ALPHA;
-						}
-						//image metadata has been received, wait for image bytestream
-						imgReceiveStatus = 2;
-					}
+				if (str == "Sending Image" && status == IDLE) {
+					//begin receiving image (starting with metadata
+					status = RECEIVE_IMG_METADATA;
+				}
+
+				else if (status == RECEIVE_IMG_METADATA) {
+					parseMetadata(str);
 				}
 			}
 		}
@@ -124,9 +124,9 @@ void ofApp::update(){
 		//
 	}
 	else {
-		connectStatus = 0;
+		status = DISCONNECTED;
 		msgTx = "";
-		// if we are not connected lets try and reconnect every 5 seconds
+		// if not connected try and reconnect every 5 seconds
 		deltaTime = ofGetElapsedTimeMillis() - connectTime;
 		if (deltaTime > 5000) {
 			tcpClient.setup("127.0.0.1", 11999);
@@ -134,6 +134,29 @@ void ofApp::update(){
 			connectTime = ofGetElapsedTimeMillis();
 		}
 
+	}
+}
+
+void ofApp::parseMetadata(string message) {
+	//expecting metadata string = width, height, filename, filesize (in bytes)
+
+	//split on commas to get list/vector of values
+	vector <string> metadata = ofSplitString(message, ",");
+
+	//if message has split into 4 values, (assume) message is the metadata
+	if (metadata.size() == 4) {
+		imgWidth = ofToInt(metadata[0]);
+		imgHeight = ofToInt(metadata[1]);
+		receivedImgName = metadata[2];
+		//imgSize automatically adjusts if more bytes per pixel (Eg: PNG)
+		imgSize = ofToInt(metadata[3]);
+		string filetype = receivedImgName.substr(receivedImgName.size() - 3);
+		receivedImgType = OF_IMAGE_COLOR;
+		if (filetype == "png") {
+			receivedImgType = OF_IMAGE_COLOR_ALPHA;
+		}
+		//image metadata has been received, wait for image bytestream
+		status = RECEIVE_IMG_DATA;
 	}
 }
 
@@ -149,7 +172,7 @@ void ofApp::draw(){
 			ofDrawBitmapString(msgTx, 85, 55);
 		}
 		else {
-			ofDrawBitmapString("status:" + ofToString(imgReceiveStatus), 15, 55);
+			ofDrawBitmapString("status:" + (statusNames[status]), 15, 55);
 		}
 		ofDrawBitmapString("from server: \n" + msgRx, 15, 270);
 	}
@@ -161,14 +184,16 @@ void ofApp::draw(){
 		ofDrawBitmapString(msgStore[i], 300, 300 + (15 * i));
 	}
 
-
+	//reset colour for drawing image (affects tint)
+	ofSetColor(255);
 
 	//draw stored images on schedule
 	displayElapsedTime = ofGetElapsedTimeMillis() - displayStartTime;
+	
 	//if image has not been displayed for full scheduled time yet
 	if (displayElapsedTime < displayTime) {
 		//for now, just draw image as normal size (may need to be stretched to fit, or cropped for full-size)
-		image.draw(500, 500);
+		image.draw(500, 500, 300, 300);
 	}
 	//current image has been displayed for scheduled duration
 	else {

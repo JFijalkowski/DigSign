@@ -15,13 +15,14 @@ const int SENT_IMG_DATA = 4;
 const int SEND_DISPLAY_SCHEDULE = 5;
 const int REMOVE_IMAGE = 6;
 
-const string statusNames[] = { "Idle",
-	"Starting Image Send...",
-	"Sending Image Metadata...",
-	"Sending Image Data...",
-	"Sent Image Data, awaiting confirmation...",
-	"Sending Display Schedule",
-	"Removing Image" };
+map<int,string> statusNames = {
+	{IDLE, "Idle"},
+	{START_IMG_SEND, "Starting Image Send..."},
+	{SEND_IMG_METADATA, "Sending Image Metadata..."},
+	{SEND_IMG_DATA, "Sending Image Data..."},
+	{SENT_IMG_DATA, "Sent Image Data, awaiting confirmation..."},
+	{SEND_DISPLAY_SCHEDULE, "Sending Display Schedule"},
+	{REMOVE_IMAGE, "Removing Image" }};
 //add some constants for messages (eg: "Client Connected" so no mismatch occurs)
 //removes need to directly type message strings, and prevents capitalisation/typo errors
 
