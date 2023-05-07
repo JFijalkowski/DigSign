@@ -120,8 +120,21 @@ void ofApp::update(){
 					status = RECEIVE_IMG_METADATA;
 				}
 
+				else if (str == "Send Schedule" && status == IDLE) {
+					//receive new image schedule
+					status = RECEIVE_DISPLAY_SCHEDULE;
+				}
+
 				else if (status == RECEIVE_IMG_METADATA) {
 					parseMetadata(str);
+				}
+
+				else if (status == RECEIVE_DISPLAY_SCHEDULE) {
+					schedule = parseSchedule(str);
+					for (tuple<string,int> pair : schedule) {
+						cout << get<0>(pair) << get<1>(pair) << "\n";
+					}
+					status = IDLE;
 				}
 			}
 		}
@@ -165,6 +178,17 @@ void ofApp::parseMetadata(string message) {
 		//image metadata has been received, wait for image bytestream
 		status = RECEIVE_IMG_DATA;
 	}
+}
+
+vector<tuple<string, int>> ofApp::parseSchedule(string message) {
+	vector<string> pairs = ofSplitString(message, "|");
+	vector<tuple<string, int>> newSchedule = {};
+	for (string pair : pairs) {
+		vector<string> data = ofSplitString(pair, ",");
+		newSchedule.push_back({ data[0], ofToInt(data[1]) });
+		cout << pair << "\n";
+	}
+	return newSchedule;
 }
 
 //--------------------------------------------------------------
@@ -244,6 +268,7 @@ void ofApp::draw(){
 		image.draw(400, 400, 300, 300);
 		//set next image in queue to fade-in
 		fadeImage.load(get<0>(schedule[getNextImage()]));
+		cout << get<1>(schedule[getNextImage()]);
 		//set start of fade
 		fadeStart = currentTime;
 		fading = true;

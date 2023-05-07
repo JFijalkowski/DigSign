@@ -62,6 +62,7 @@ class ofApp : public ofBaseApp{
 
 		//link client id to coords for its refresh button 
 		map <int, tuple<int, int, int, int>> refreshButtons;
+		map <int, tuple<int, int, int, int>> scheduleButtons;
 
 		
 };

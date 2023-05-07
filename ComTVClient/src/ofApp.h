@@ -53,6 +53,7 @@ class ofApp : public ofBaseApp{
 		//stores tuple of image name and display duration
 		//when switching to new image, timer is set to attached duration value
 		vector<tuple<string, int>> schedule;
+		vector<tuple<string, int>> parseSchedule(string message);
 
 		
 		//image being displayed

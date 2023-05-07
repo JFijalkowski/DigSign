@@ -12,7 +12,7 @@ const int START_IMG_SEND = 1;
 const int SEND_IMG_METADATA = 2;
 const int SEND_IMG_DATA = 3;
 const int SENT_IMG_DATA = 4;
-const int SEND_DISPLAY_SCHEDULE = 5;
+const int SEND_SCHEDULE = 5;
 const int REMOVE_IMAGE = 6;
 
 map<int,string> statusNames = {
@@ -21,7 +21,7 @@ map<int,string> statusNames = {
 	{SEND_IMG_METADATA, "Sending Image Metadata..."},
 	{SEND_IMG_DATA, "Sending Image Data..."},
 	{SENT_IMG_DATA, "Sent Image Data, awaiting confirmation..."},
-	{SEND_DISPLAY_SCHEDULE, "Sending Display Schedule"},
+	{SEND_SCHEDULE, "Sending Display Schedule"},
 	{REMOVE_IMAGE, "Removing Image" }};
 //add some constants for messages (eg: "Client Connected" so no mismatch occurs)
 //removes need to directly type message strings, and prevents capitalisation/typo errors
@@ -36,6 +36,7 @@ const int refreshButtonWidth = 200;
 const int refreshButtonHeight = 50;
 
 int refreshButtonColour[] = { 50, 150, 50 };
+int scheduleButtonColour[] = { 50, 50, 150 };
 const int panelCoords[4][2] = { {25,100}, {275, 100}, {525, 100}, {775, 100} };
 
 //--------------------------------------------------------------
@@ -169,6 +170,18 @@ void ofApp::handleClient(int clientStatus, int clientID, string lastMessage) {
 
 		}
 	}
+
+	//send new display schedule to client - chain with refresh?
+	if (clientStatus == SEND_SCHEDULE) {
+		//message format: imgName,duration | imgName,duration
+		//pipes to separate image-duration pairs, commas to separate image name and duration
+		//create GUI to enter schedule?
+		string schedule = "testimg2.jpg,1000|testimg.jpg,1000";
+		TCP.send(clientID, schedule);
+		cout << schedule << "\n";
+		cout << "Sent schedule \n";
+		clientStatuses[clientID] = IDLE;
+	}
 }
 
 
@@ -228,7 +241,9 @@ void ofApp::drawControlPanel(int x, int y, int clientID, int backgroundColour[3]
 	refreshButtons.insert({ 
 		clientID, drawButton(x, (y + clientPanelSize - refreshButtonHeight), refreshButtonWidth, refreshButtonHeight, refreshButtonColour, "Refresh") 
 		});
-	
+	scheduleButtons.insert({
+		clientID, drawButton((x + (clientPanelSize/2)), y, (refreshButtonWidth/2), refreshButtonHeight, scheduleButtonColour, "Send Schedule")
+		});
 	// draw preview of displayed image
 	// small green square/corner to identify it's running (may be already implied that it's running since unconnected clients will not be drawn)
 	// maybe have a popup gui that's created when neede	d - allows you to input image display orders (probably)
@@ -245,7 +260,7 @@ tuple<int, int, int, int> ofApp::drawButton(int x, int y, int width, int height,
 	
 	//draw refresh button text
 	ofSetColor(255);
-	ofDrawBitmapString("Refresh", (x + (width * 0.1)), (y + (height * 0.66)));
+	ofDrawBitmapString(label, (x + (width * 0.1)), (y + (height * 0.66)));
 
 	tuple <int, int, int, int> buttonCoords = { x,y, x + width, y + width };
 	return buttonCoords;
@@ -316,6 +331,11 @@ void ofApp::mousePressed(int x, int y, int button){
 			//for now, send image
 
 			//break, as only one button can be pressed at a given time
+			break;
+		}
+		else if (checkCollides(x, y, scheduleButtons[i])) {
+			TCP.send(i, "Send Schedule");
+			clientStatuses[i] = SEND_SCHEDULE;
 			break;
 		}
 		//check if <button type> button has been pressed ...
