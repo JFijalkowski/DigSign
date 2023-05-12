@@ -3,6 +3,7 @@
 *.db-wal
 *.opendb
 *.tlog
+*.obj
 
 ComTVClient/.vs/ComTVClient/v16/Browse.VC.db
 ComTVClient/.vs/ComTVClient/v16/Solution.VC.db
