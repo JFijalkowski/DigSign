@@ -25,3 +25,4 @@ ComTVClient/bin/ComTVClient_debug.exp
 ComTVClient/bin/ComTVClient_debug.lib
 ComTVClient/bin/ComTVClient_debug.pdb
 ComTVClient/bin/data/
+*.obj
