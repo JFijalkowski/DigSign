@@ -8,13 +8,15 @@ const int DISCONNECTED = -1;
 const int IDLE = 0;
 const int RECEIVE_IMG_METADATA = 2;
 const int RECEIVE_IMG_DATA = 3;
-const int RECEIVE_DISPLAY_SCHEDULE = 4;
-const int REMOVE_IMAGE = 5;
+const int SAVE_IMG_DATA = 4;
+const int RECEIVE_DISPLAY_SCHEDULE = 5;
+const int REMOVE_IMAGE = 6;
 
 map<int, string> statusNames = {
 	{IDLE, "Idle"},
 	{RECEIVE_IMG_METADATA, "Receiving Image Metadata..."},
 	{RECEIVE_IMG_DATA, "Receiving Image Data..."},
+	{SAVE_IMG_DATA, "Saving Image..."},
 	{RECEIVE_DISPLAY_SCHEDULE, "Receiving Display Schedule"},
 	{REMOVE_IMAGE, "Removing Image"}};
 
@@ -46,7 +48,7 @@ void ofApp::setup(){
 
 	status = DISCONNECTED;
 
-	schedule = { {"testimg.jpg", 5000}, {"testimg2.jpg", 5000} };
+	schedule = { {"diamond.jpg", 5000}, {"regent.jpg", 5000} };
 	displayTime = get<1>(schedule[0]);
 	image.load(get<0>(schedule[0]));
 	displayElapsedTime = 0;
@@ -67,17 +69,16 @@ void ofApp::update(){
 		// client waiting for bytestream
 		if (status == RECEIVE_IMG_DATA) {
 
-			bool receivedAll = false;
 			ofBuffer buffer;
 			buffer.allocate(imgSize);
 			int receivedBytes = 0;
 			int remainingBytes = imgSize;
 			int messageSize = 256;
 			cout << "Started img receive \n";
+			
 
 			//listen for message chunks until all bytes received
 			while (remainingBytes > 0) {
-				cout << remainingBytes << "\n";
 				if (remainingBytes > messageSize) {
 					int result = tcpClient.receiveRawBytes((char*)&buffer.getBinaryBuffer()[receivedBytes], messageSize);
 					if (result > 0){
@@ -90,15 +91,24 @@ void ofApp::update(){
 					tcpClient.receiveRawBytes((char*)&buffer.getBinaryBuffer()[receivedBytes], remainingBytes);
 					receivedBytes += remainingBytes;
 					remainingBytes = 0;
-					receivedAll = true;
 				}
 			}
 			//if all data obtained, save image
-			if (receivedAll) {
+			if (remainingBytes==0) {
+				imgSaved = false;
 				cout << "saving image\n";
 				receivedImg.setFromPixels((unsigned char*)buffer.getData(), imgWidth, imgHeight, receivedImgType);
-				receivedImg.save(receivedImgName);
-				//send confirmation
+				imgSaved = receivedImg.save(receivedImgName);
+				status = SAVE_IMG_DATA;
+			}
+		}
+		//prioritise saving image before receiving new data
+		else if (status == SAVE_IMG_DATA) {
+			
+			cout << "Still waiting to save image\n";
+			//send confirmation if image has saved
+			if (imgSaved) {
+				cout << "Image has been saved, supposedly\n";
 				tcpClient.send("Image Received");
 				status = IDLE;
 			}
@@ -219,14 +229,15 @@ void ofApp::draw(){
 	ofSetColor(255);
 
 	int currentTime = ofGetElapsedTimeMillis();
-
+	int width = ofGetWindowWidth();
+	int height = ofGetWindowHeight();
 	//draw stored images on schedule
 	displayElapsedTime = currentTime - displayStartTime;
 	fadeElapsed = currentTime - fadeStart;
 	//if image has not been displayed for full scheduled time yet
 	if (displayElapsedTime < displayTime) {
 		//draw image as normal
-		image.draw(400, 400, 300, 300);
+		image.draw(0, 0, width, height);
 	}
 
 	//blend images if doing fade
@@ -234,10 +245,10 @@ void ofApp::draw(){
 		int fade = ((float) fadeElapsed / fadeDuration) * 255;
 
 		ofSetColor(255, 255, 255, 255-fade);
-		image.draw(400, 400, 300, 300);
+		image.draw(0, 0, width, height);
 
 		ofSetColor(255, 255, 255, fade);
-		fadeImage.draw(400, 400, 300, 300);
+		fadeImage.draw(0, 0, width, height);
 	}
 
 	//if image had finished fade, set up new image
@@ -255,7 +266,7 @@ void ofApp::draw(){
 		//load new image
 		//image.load(get<0>(newSchedule));
 		image = fadeImage;
-		image.draw(400, 400, 300, 300);
+		image.draw(0, 0, width, height);
 		//set display duration
 		displayTime = get<1>(newSchedule);
 		
@@ -265,7 +276,7 @@ void ofApp::draw(){
 	//image has displayed for scheduled time, set up fade to next image
 	else {
 		cout << "Started Fade \n";
-		image.draw(400, 400, 300, 300);
+		image.draw(0, 0, width, height);
 		//set next image in queue to fade-in
 		fadeImage.load(get<0>(schedule[getNextImage()]));
 		cout << get<1>(schedule[getNextImage()]);

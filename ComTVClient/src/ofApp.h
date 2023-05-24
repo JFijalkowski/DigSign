@@ -36,6 +36,9 @@ class ofApp : public ofBaseApp{
 		//client's instruction status
 		int status;
 
+		//if received image has been saved - preventing instruction mangling
+		bool imgSaved = false;
+
 
 		void parseMetadata(string message);
 		int imgWidth;

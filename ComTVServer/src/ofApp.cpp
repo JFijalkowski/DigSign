@@ -142,7 +142,6 @@ void ofApp::handleClient(int clientStatus, int clientID, string lastMessage) {
 		cout << "Sending image";
 		//send image data	to client
 		while (bytesRemaining > 1) {
-			cout << bytesSent << "\n";
 			if (bytesRemaining > messageSize) {
 				TCP.sendRawBytes(clientID, (char*)&img.getPixels()[bytesSent], messageSize);
 				bytesRemaining -= messageSize;
@@ -180,7 +179,7 @@ void ofApp::handleClient(int clientStatus, int clientID, string lastMessage) {
 		//message format: imgName,duration | imgName,duration
 		//pipes to separate image-duration pairs, commas to separate image name and duration
 		//create GUI to enter schedule?
-		string schedule = "testimg2.jpg,1000|testimg.jpg,1000";
+		string schedule = "regent.jpg,3000|diamond.jpg,3000|interior.jpg,3000";
 		TCP.send(clientID, schedule);
 		cout << schedule << "\n";
 		cout << "Sent schedule \n";
