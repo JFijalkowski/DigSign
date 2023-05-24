@@ -283,7 +283,6 @@ void ofApp::getAvailableImages() {
 		//add check for just image files (in case other files are accidentally in the directory)
 		if ((file.getExtension() == "jpg")||(file.getExtension() == "png")) {
 			imageList.push_back(file.getFileName());
-			cout << file.getFileName() << "\n";
 		}
 	}
 	

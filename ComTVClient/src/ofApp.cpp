@@ -79,6 +79,7 @@ void ofApp::update(){
 
 			//listen for message chunks until all bytes received
 			while (remainingBytes > 0) {
+				//receive full size chunk
 				if (remainingBytes > messageSize) {
 					int result = tcpClient.receiveRawBytes((char*)&buffer.getBinaryBuffer()[receivedBytes], messageSize);
 					if (result > 0){
@@ -86,11 +87,14 @@ void ofApp::update(){
 						receivedBytes += messageSize;
 					}
 				}
+				//receive last chunk
 				else {
-					cout << "last chunk left: " << remainingBytes << "\n";
-					tcpClient.receiveRawBytes((char*)&buffer.getBinaryBuffer()[receivedBytes], remainingBytes);
-					receivedBytes += remainingBytes;
-					remainingBytes = 0;
+					cout << "one chunk left: " << remainingBytes << "\n";
+					int result = tcpClient.receiveRawBytes((char*)&buffer.getBinaryBuffer()[receivedBytes], remainingBytes);
+					if (result > 0) {
+						receivedBytes += remainingBytes;
+						remainingBytes = 0;
+					}
 				}
 			}
 			//if all data obtained, save image
