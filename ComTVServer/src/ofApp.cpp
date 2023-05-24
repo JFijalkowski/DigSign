@@ -51,7 +51,7 @@ void ofApp::setup(){
 	//settings.reuse = true;
 	//settings.messageDelimiter = "\n";
 
-	getAvailableImages();
+	
 	TCP.setup(settings);
 
 	// optionally set the delimiter to something else.  The delimiter in the client and the server have to be the same, default being [/TCP]
@@ -61,6 +61,10 @@ void ofApp::setup(){
 	gui.setup();
 	gui.add(clientPing.setup("Ping client"));
 
+
+	//get images from google drive
+
+	getAvailableImages();
 }
 
 //--------------------------------------------------------------
