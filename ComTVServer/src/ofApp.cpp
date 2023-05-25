@@ -65,6 +65,8 @@ void ofApp::setup(){
 	//get images from google drive
 
 	getAvailableImages();
+	img.load(images[0]);
+	encodeImage(img, "boo");
 }
 
 //--------------------------------------------------------------
@@ -289,6 +291,39 @@ void ofApp::getAvailableImages() {
 	images = imageList;
 }
 
+//steganography: encode authentication key into image data using Least Significant Bit
+//1 bit of key is encoded per byte of image data
+ofImage ofApp::encodeImage(ofImage image, string key) {
+	//get input image pixel data (list of chars)
+	unsigned char *pix = image.getPixels().getPixels();
+	cout << pix;
+	//index of pixel data to be encoded to (encode 1 bit per byte of image)
+	int encoded = 0;
+	//encode each character from key
+	for (int i = 0; i < key.length(); i++ ) {
+		char x = key[i];
+		//convert char to binary
+		string charBinary = ofToBinary(x);
+		cout << "\nencoding: " << charBinary << "\n";
+		//encode each bit from char binary string
+		for (int j = 0; j < charBinary.length(); j++) {
+			string newPixelByte = ofToBinary(pix[encoded]);
+			//set last bit to new binary value
+			newPixelByte[7] = charBinary[j];
+			cout << "before: " << ofToBinary(pix[encoded]) << "\n";
+			//overwrite original char
+			pix[encoded] = ofBinaryToChar(newPixelByte);
+			cout << "after: " << ofToBinary(pix[encoded]) << "\n";
+			//increment encoding count
+			encoded++;
+			
+		}
+	}
+	ofPixels newPixels;
+	newPixels.setFromPixels(pix, image.getWidth(), image.getHeight(), image.getImageType());
+	image.setFromPixels(newPixels);
+	return image;
+}
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
 
