@@ -40,7 +40,7 @@ int scheduleButtonColour[] = { 50, 50, 150 };
 const int panelCoords[4][2] = { {25,100}, {275, 100}, {525, 100}, {775, 100} };
 
 //--------------------------------------------------------------
-void ofApp::setup(){
+void ofApp::setup() {
 	ofSetBackgroundColor(20);
 
 	// setup the server to listen on 11999
@@ -51,7 +51,7 @@ void ofApp::setup(){
 	//settings.reuse = true;
 	//settings.messageDelimiter = "\n";
 
-	
+
 	TCP.setup(settings);
 
 	// optionally set the delimiter to something else.  The delimiter in the client and the server have to be the same, default being [/TCP]
@@ -65,8 +65,17 @@ void ofApp::setup(){
 	//get images from google drive
 
 	getAvailableImages();
-	img.load(images[0]);
-	encodeImage(img, "boo");
+	/*
+	img.load("testimg.jpg");
+	cout << img.getPixels().getData() << "\n";
+	cout << "Encoding: " << "encoded.jpg" << "\n";
+	ofImage newimg = encodeImage(img, "boo");
+	newimg.save("encoded.jpg", OF_IMAGE_QUALITY_BEST);
+	cout << newimg.getPixels().getData() << "\n";
+	newimg.load("encoded.jpg");
+	cout << newimg.getPixels().getData()[20] << "\n";
+	*/
+
 }
 
 //--------------------------------------------------------------
@@ -135,6 +144,7 @@ void ofApp::handleClient(int clientStatus, int clientID, string lastMessage) {
 	}
 
 	else if (clientStatus == SEND_IMG_DATA) {
+		img = encodeImage(img, authKey);
 		ofPixels imgPixels = img.getPixels();
 		unsigned char* imgData = imgPixels.getData();
 		cout << "imgSize: " << imgSize << "\n";
@@ -271,10 +281,6 @@ tuple<int, int, int, int> ofApp::drawButton(int x, int y, int width, int height,
 	return buttonCoords;
 
 }
-//datastructure to store button info should be:
-//split by button function
-//key matches client id, so same value can be used to determine which client to send messages to
-// 
 
 //get names of image files in filesystem and update stored list
 void ofApp::getAvailableImages() {
@@ -295,8 +301,7 @@ void ofApp::getAvailableImages() {
 //1 bit of key is encoded per byte of image data
 ofImage ofApp::encodeImage(ofImage image, string key) {
 	//get input image pixel data (list of chars)
-	unsigned char *pix = image.getPixels().getPixels();
-	cout << pix;
+	unsigned char *pix = image.getPixels().getData();
 	//index of pixel data to be encoded to (encode 1 bit per byte of image)
 	int encoded = 0;
 	//encode each character from key
@@ -310,18 +315,21 @@ ofImage ofApp::encodeImage(ofImage image, string key) {
 			string newPixelByte = ofToBinary(pix[encoded]);
 			//set last bit to new binary value
 			newPixelByte[7] = charBinary[j];
+			cout << "Char before: " << pix[encoded] << "\n";
 			cout << "before: " << ofToBinary(pix[encoded]) << "\n";
 			//overwrite original char
 			pix[encoded] = ofBinaryToChar(newPixelByte);
 			cout << "after: " << ofToBinary(pix[encoded]) << "\n";
 			//increment encoding count
 			encoded++;
-			
+			cout << "Encoded to: " << pix[encoded - 1] << "\n";
 		}
+		
 	}
 	ofPixels newPixels;
 	newPixels.setFromPixels(pix, image.getWidth(), image.getHeight(), image.getImageType());
 	image.setFromPixels(newPixels);
+	ofImage newimg;
 	return image;
 }
 //--------------------------------------------------------------

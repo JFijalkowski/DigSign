@@ -26,6 +26,8 @@ class ofApp : public ofBaseApp{
 		void gotMessage(ofMessage msg);
 
 		void getAvailableImages();
+
+		string authKey = "H2SYBBKWTJ";
 		ofImage encodeImage(ofImage image, string key);
 
 		void handleClient(int clientStatus, int clientID, string lastMessage);

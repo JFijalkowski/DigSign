@@ -36,9 +36,8 @@ class ofApp : public ofBaseApp{
 		//client's instruction status
 		int status;
 
-		//if received image has been saved - preventing instruction mangling
-		bool imgSaved = false;
-
+		string authKey = "H2SYBBKWTJ";
+		bool decodeImage(ofImage image, string key);
 
 		void parseMetadata(string message);
 		int imgWidth;

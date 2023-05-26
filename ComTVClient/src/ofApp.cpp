@@ -99,23 +99,22 @@ void ofApp::update(){
 			}
 			//if all data obtained, save image
 			if (remainingBytes==0) {
-				imgSaved = false;
 				cout << "saving image\n";
 				receivedImg.setFromPixels((unsigned char*)buffer.getData(), imgWidth, imgHeight, receivedImgType);
-				imgSaved = receivedImg.save(receivedImgName);
+				
 				status = SAVE_IMG_DATA;
 			}
 		}
 		//prioritise saving image before receiving new data
 		else if (status == SAVE_IMG_DATA) {
-			
-			cout << "Still waiting to save image\n";
-			//send confirmation if image has saved
-			if (imgSaved) {
-				cout << "Image has been saved, supposedly\n";
-				tcpClient.send("Image Received");
-				status = IDLE;
+			if (decodeImage(receivedImg, authKey)) {
+				receivedImg.save(receivedImgName);
+				cout << "Image has been saved\n";
 			}
+			//send confirmation now image has been received
+			tcpClient.send("Image Received");
+			status = IDLE;
+			
 		}
 		
 		//otherwise client will be receiving string values
@@ -169,6 +168,38 @@ void ofApp::update(){
 		}
 
 	}
+}
+
+//steganography: decode steganography-encoded image authentication key into image data using Least Significant Bit
+//1 bit of key is encoded per byte of image data
+//starts at front of image data
+bool ofApp::decodeImage(ofImage image, string key) {
+	//get input image pixel data (list of chars)
+	unsigned char* pix = image.getPixels().getData();
+	string receivedKey = "";
+	//index of pixel data to be decoded from
+	int decoded = 0;
+	//decode per character from key
+	for (int i = 0; i < key.length(); i++) {
+		//build binary string of encoded char
+		string charBinary = "";
+
+		//get each bit of encoded char
+		for (int j = 0; j <8; j++) {
+			string encodedPixelByte = ofToBinary(pix[decoded]);
+			//get last bit, append to bit string
+			charBinary += encodedPixelByte[7];
+			cout << "byte: " << ofToBinary(pix[decoded]) << "\n";
+			cout << "bit: " << encodedPixelByte[7] << "\n";
+			//increment decoding count
+			decoded++;
+		}
+		//add decoded character to received key
+		receivedKey += ofBinaryToChar(charBinary);
+		cout << "\n" << ofBinaryToChar(charBinary) << "\n";
+	}
+	cout << "\n Received Key: " << receivedKey <<"\n";
+	return (receivedKey == key);
 }
 
 void ofApp::parseMetadata(string message) {
@@ -291,6 +322,7 @@ void ofApp::draw(){
 
 	}
 }
+
 int ofApp::getNextImage() {
 	int imgNum = displayedImgNum + 1;
 	//if end of schedule, start at beginning
