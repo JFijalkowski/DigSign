@@ -23,7 +23,24 @@ map<int,string> statusNames = {
 	{SENT_IMG_DATA, "Sent Image Data, awaiting confirmation..."},
 	{SEND_SCHEDULE, "Sending Display Schedule"},
 	{REMOVE_IMAGE, "Removing Image" }};
-//add some constants for messages (eg: "Client Connected" so no mismatch occurs)
+
+
+ofColor paleGreen(159, 255, 148);
+ofColor paleBlue(117, 202, 255);
+ofColor paleYellow(255, 253, 148);
+ofColor paleOrange(255, 212, 148);
+ofColor paleRed(255, 163, 150);
+
+map<int, ofColor> statusColours = {
+	{IDLE, paleGreen},
+	{START_IMG_SEND, paleBlue},
+	{SEND_IMG_METADATA, paleOrange},
+	{SEND_IMG_DATA, paleYellow},
+	{SENT_IMG_DATA, paleRed},
+	{SEND_SCHEDULE, paleYellow},
+	{REMOVE_IMAGE, paleRed } };
+
+//TODO: add some constants for messages (eg: "Client Connected" so no mismatch occurs)
 //removes need to directly type message strings, and prevents capitalisation/typo errors
 
 
@@ -237,8 +254,13 @@ void ofApp::drawControlPanel(int x, int y, int clientID, int backgroundColour[3]
 	// draw client bounding box
 	ofSetColor(backgroundColour[0],backgroundColour[1],backgroundColour[2]);
 	ofDrawRectangle(x, y, clientPanelSize, clientPanelSize);
+
+	//draw status name on box of corresponding colour
+	ofSetColor(statusColours[clientStatuses[clientID]]);
+	ofDrawRectangle(x, y, clientPanelSize - (refreshButtonWidth / 2), refreshButtonHeight);
 	ofSetColor(0);
 	ofDrawBitmapString(statusNames[clientStatuses[clientID]], x + 5, y + 15);
+
 	//draw refresh button at bottom of panel
 	//add drawn button coords to collection of refresh buttons
 	refreshButtons.insert({ 
