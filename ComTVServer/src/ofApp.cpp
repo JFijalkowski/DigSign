@@ -136,7 +136,6 @@ void ofApp::handleClient(int clientStatus, int clientID, string lastMessage) {
 		int width = img.getWidth();
 		int height = img.getHeight();
 		imgSize = width * height * 3;
-		//cout << img.getPixels().getData();
 		//format: width,height,filename, filesize
 		TCP.send(clientID, (ofToString(width) + "," + ofToString(height) + "," + imgName + "," + ofToString(imgSize)));
 		cout << "Sent Metadata\n";
@@ -147,7 +146,6 @@ void ofApp::handleClient(int clientStatus, int clientID, string lastMessage) {
 		img = encodeImage(img, authKey);
 		ofPixels imgPixels = img.getPixels();
 		unsigned char* imgData = imgPixels.getData();
-		cout << "imgSize: " << imgSize << "\n";
 		int bytesRemaining = imgSize;
 		int messageSize = 256;
 		int bytesSent = 0;
@@ -167,7 +165,6 @@ void ofApp::handleClient(int clientStatus, int clientID, string lastMessage) {
 			}
 		}
 
-		//TCP.sendRawBytes(i, (const char*)imgData, imgSize);
 		cout << "sent image data\n";
 		clientStatuses[clientID] = SENT_IMG_DATA;
 	}
@@ -186,14 +183,13 @@ void ofApp::handleClient(int clientStatus, int clientID, string lastMessage) {
 		}
 	}
 
-	//send new display schedule to client - chain with refresh?
+	//send new display schedule to client
 	if (clientStatus == SEND_SCHEDULE) {
 		//message format: imgName,duration | imgName,duration
 		//pipes to separate image-duration pairs, commas to separate image name and duration
-		//create GUI to enter schedule?
+
 		string schedule = "regent.jpg,3000|diamond.jpg,3000|interior.jpg,3000";
 		TCP.send(clientID, schedule);
-		cout << schedule << "\n";
 		cout << "Sent schedule \n";
 		clientStatuses[clientID] = IDLE;
 	}
@@ -206,13 +202,10 @@ void ofApp::draw(){
 	ofDrawBitmapString("COM TV SERVER \nConnect on port: " + ofToString(TCP.getPort()), 10, 20);
 	ofDrawBitmapString("Connected Clients : " + ofToString(TCP.getNumClients()), 10, 50);
 	ofSetColor(0);
-	//ofDrawRectangle(10, 60, ofGetWidth() - 24, ofGetHeight() - 65 - 15);
 
 	ofSetColor(220);
-	int boxcolour[3] = { 100,100,100 };
-
 	
-	//clear button collection
+	//clear button collection - prevents unconnected clients being referenced
 	refreshButtons = {};
 
 	int connectedClientNum = 0;
@@ -221,7 +214,10 @@ void ofApp::draw(){
 	for (unsigned int i = 0; i < (unsigned int)TCP.getLastID(); i++) {
 		if (!TCP.isClientConnected(i))continue;
 
-		
+		// get location to draw the client's control box
+		int xPos = panelCoords[connectedClientNum][0];
+		int yPos = panelCoords[connectedClientNum][1];
+
 		// give each client its own color
 		int r = 255 - i * 30;
 		int g = 255 - i * 20;
@@ -229,19 +225,11 @@ void ofApp::draw(){
 
 		ofSetColor(255 - i * 30, 255 - i * 20, 100 + i * 40);
 		int panelColour[] = { r,g,b };
-		drawControlPanel(panelCoords[connectedClientNum][0], panelCoords[connectedClientNum][1], i, panelColour);
-
-		// calculate where to draw the text
-		int xPos = 15;
-		int yPos = 80 + (12 * i * 4);
-
-		// get the ip and port of the client
-		string port = ofToString(TCP.getClientPort(i));
-		string ip = TCP.getClientIP(i);
-		string info = "client " + ofToString(i) + " -connected from " + ip + " on port: " + port;
+		drawControlPanel(xPos, yPos, i, panelColour);
 
 	}
-	//gui.draw();
+
+	//TODO: add Schedule Creation/edit UI
 }
 
 //method to draw a controls box for a connected client at a given coordinate
@@ -259,10 +247,13 @@ void ofApp::drawControlPanel(int x, int y, int clientID, int backgroundColour[3]
 	scheduleButtons.insert({
 		clientID, drawButton((x + (clientPanelSize/2)), y, (refreshButtonWidth/2), refreshButtonHeight, scheduleButtonColour, "Send Schedule")
 		});
-	// draw preview of displayed image
-	// small green square/corner to identify it's running (may be already implied that it's running since unconnected clients will not be drawn)
-	// maybe have a popup gui that's created when neede	d - allows you to input image display orders (probably)
-	//add coordinates for buttons to data structure for buttons (and which client they belong to)
+	// TODO: draw preview of displayed image
+
+	// get the ip and port of the client
+	ofSetColor(0);
+	ofDrawBitmapString("Client " + ofToString(clientID), x + 5, y + 65);
+	ofDrawBitmapString("Connected from:" + TCP.getClientIP(clientID), x + 5, y + 85);
+	ofDrawBitmapString("On Port: " + ofToString(TCP.getClientPort(clientID)), x + 5, y + 105);
 }
 
 //draw a button at coordinates x,y of specified width, height and colour
