@@ -317,32 +317,32 @@ ofImage ofApp::encodeImage(ofImage image, string key) {
 	unsigned char *pix = image.getPixels().getData();
 	//index of pixel data to be encoded to (encode 1 bit per byte of image)
 	int encoded = 0;
+
 	//encode each character from key
 	for (int i = 0; i < key.length(); i++ ) {
 		char x = key[i];
-		//convert char to binary
+		//convert char-to-be-encoded to binary string
 		string charBinary = ofToBinary(x);
-		cout << "\nencoding: " << charBinary << "\n";
+
 		//encode each bit from char binary string
 		for (int j = 0; j < charBinary.length(); j++) {
+
+			//get next pixel to be encoded into
 			string newPixelByte = ofToBinary(pix[encoded]);
 			//set last bit to new binary value
 			newPixelByte[7] = charBinary[j];
-			cout << "Char before: " << pix[encoded] << "\n";
-			cout << "before: " << ofToBinary(pix[encoded]) << "\n";
-			//overwrite original char
+
+			//overwrite original pixel data
 			pix[encoded] = ofBinaryToChar(newPixelByte);
-			cout << "after: " << ofToBinary(pix[encoded]) << "\n";
-			//increment encoding count
+
+			//increment pixel encoding count
 			encoded++;
-			cout << "Encoded to: " << pix[encoded - 1] << "\n";
 		}
 		
 	}
 	ofPixels newPixels;
 	newPixels.setFromPixels(pix, image.getWidth(), image.getHeight(), image.getImageType());
 	image.setFromPixels(newPixels);
-	ofImage newimg;
 	return image;
 }
 //--------------------------------------------------------------
@@ -398,14 +398,12 @@ void ofApp::mousePressed(int x, int y, int button){
 		}
 		//check if <button type> button has been pressed ...
 		// 
-		//change image order 
-		//send new list (of image names) to client
-		//may need its own UI element for this, either dragging&dropping, typing in some text box or selecting order from dropdowns
-		int mousePos = x;
-	//update/replace image - may be needed, but not 100% necessary
-
-	//remove image
-		//specify image to be deleted, and pass in a new image order (just with the removed image taken out)
+		//Create / edit schedule
+		//
+		//update/replace image - already done with Refresh
+		// 
+		//remove image (including reference in schedule)
+		// 
 	}
 }
 
