@@ -153,8 +153,6 @@ void ofApp::update(){
 		}
 		
 
-		//while connected, do poll to server every (?) 10 seconds
-		//
 	}
 	else {
 		status = DISCONNECTED;
@@ -262,7 +260,6 @@ void ofApp::draw(){
 
 	//reset colour for drawing image (affects image tint)
 	ofSetColor(255);
-
 	int currentTime = ofGetElapsedTimeMillis();
 	int width = ofGetWindowWidth();
 	int height = ofGetWindowHeight();
@@ -281,7 +278,6 @@ void ofApp::draw(){
 
 		ofSetColor(255, 255, 255, 255-fade);
 		image.draw(0, 0, width, height);
-
 		ofSetColor(255, 255, 255, fade);
 		fadeImage.draw(0, 0, width, height);
 	}
@@ -291,7 +287,6 @@ void ofApp::draw(){
 		ofDisableAlphaBlending();
 		cout << "finished fade \n";
 		fading = false;
-		
 		displayedImgNum = getNextImage();
 
 		//update current display start time
@@ -299,7 +294,6 @@ void ofApp::draw(){
 		//get filename and duration for new image
 		tuple<string, int> newSchedule = schedule[displayedImgNum];
 		//load new image
-		//image.load(get<0>(newSchedule));
 		image = fadeImage;
 		image.draw(0, 0, width, height);
 		//set display duration
@@ -310,16 +304,13 @@ void ofApp::draw(){
 
 	//image has displayed for scheduled time, set up fade to next image
 	else {
-		cout << "Started Fade \n";
 		image.draw(0, 0, width, height);
 		//set next image in queue to fade-in
 		fadeImage.load(get<0>(schedule[getNextImage()]));
-		cout << get<1>(schedule[getNextImage()]);
 		//set start of fade
 		fadeStart = currentTime;
 		fading = true;
 		ofEnableAlphaBlending();
-
 	}
 }
 

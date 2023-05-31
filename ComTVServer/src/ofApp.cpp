@@ -205,9 +205,9 @@ void ofApp::handleClient(int clientStatus, int clientID, string lastMessage) {
 		//message format: imgName,duration | imgName,duration
 		//pipes to separate image-duration pairs, commas to separate image name and duration
 
-		string schedule = "regent.jpg,3000|diamond.jpg,3000|interior.jpg,3000";
+		string schedule = "outside.jpg,3000|regent.jpg,3000|diamond.jpg,3000|interior.jpg,3000";
 		TCP.send(clientID, schedule);
-		cout << "Sent schedule \n";
+		cout << "Sent schedule \n" << schedule << "\n";
 		clientStatuses[clientID] = IDLE;
 	}
 }

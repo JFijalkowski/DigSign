@@ -5,8 +5,9 @@ University of Sheffield
 Author: Jonathan Fijalkowski - aca19jf
 For COM3610 Dissertation Project
 
+Repository made Public after report submission
 
-#Dissertation Abstract 
+## Dissertation Abstract 
 Digital Signage is a technology whereby content, including images, video and text, is displayed
 through a digital medium, for purposes such as public information, advertising and navigation.
 Spurred on by the recent plans to expand the spaces in use by the Department of Computer

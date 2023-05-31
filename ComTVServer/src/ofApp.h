@@ -51,10 +51,10 @@ class ofApp : public ofBaseApp{
 		ofImage img;
 		int imgSize = 0;
 		
-
 		//link client id to img send queue (for sending multiple images while refreshing)
 		//value is number of images remaining in queue (send all available images in order)
 		map <int, int> imgQueue;
+
 
 		string authKey = "H2SYBBKWTJ";
 		ofImage encodeImage(ofImage image, string key);
